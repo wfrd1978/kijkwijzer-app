@@ -30,6 +30,13 @@ import {
 
 const app = document.getElementById('app');
 
+// Elk verzoek van de app krijgt hooguit 12 seconden. Een trage bron geeft dan een gewone fout
+// (en het blok blijft weg of toont een melding) in plaats van eeuwig 'Ophalen…'.
+if (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) {
+  const gewoneFetch = window.fetch.bind(window);
+  window.fetch = (adres, opties = {}) => gewoneFetch(adres, { signal: AbortSignal.timeout(12000), ...opties });
+}
+
 // Service worker: zorgt dat de app ook zonder internet opent.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -889,34 +896,25 @@ async function toonVandaag() {
     document.querySelector('.herinnering').remove();
   });
 
-  if (sportOpVandaag()) {
+  // De blokken laden los van elkaar: een trage of haperende bron houdt de rest niet op.
+  const sportBlok = async () => {
     const sport = await sportVandaagHtml();
     if (nr === schermNr) document.getElementById('sport-vandaag').innerHTML = sport;
-  } else if (leesSleutel() && eigen.length) {
-    const tips = await kijktipsVanDag({ titels, diensten: eigen, dag: vandaag(), haalGenres, haalTop: haalTopOpDiensten }).catch(() => []);
-    if (nr === schermNr && tips.length) {
-      document.getElementById('kijktips').innerHTML = kijktipsHtml(tips);
-      document.getElementById('kijktips-blok').hidden = false;
-      document.getElementById('kijktips').addEventListener('click', (e) => {
-        const knop = e.target.closest('[data-tip]');
-        if (knop) toonBevestigen(tips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: () => toonVandaag() });
-      });
+  };
+  // Kijktips en Nieuw voor jou na elkaar: ze delen de genres van je smaak.
+  const tipsBlokken = async () => {
+    if (!leesSleutel() || !eigen.length) return;
+    if (!sportOpVandaag()) {
+      const tips = await kijktipsVanDag({ titels, diensten: eigen, dag: vandaag(), haalGenres, haalTop: haalTopOpDiensten }).catch(() => []);
+      if (nr === schermNr && tips.length) {
+        document.getElementById('kijktips').innerHTML = kijktipsHtml(tips);
+        document.getElementById('kijktips-blok').hidden = false;
+        document.getElementById('kijktips').addEventListener('click', (e) => {
+          const knop = e.target.closest('[data-tip]');
+          if (knop) toonBevestigen(tips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: () => toonVandaag() });
+        });
+      }
     }
-  }
-
-  const npo = await haalNpo();
-  const avond = npo ? vanavond(npo.programmas, titels, new Date(), leesTvVoorkeuren()) : [];
-  if (nr === schermNr && avond.length) {
-    document.getElementById('npo').innerHTML = npoHtml(avond);
-    document.getElementById('npo-blok').hidden = false;
-    document.getElementById('npo').addEventListener('click', (e) => {
-      const knop = e.target.closest('[data-npo]');
-      if (knop) toonNpo(avond[Number(knop.dataset.npo)]);
-    });
-  }
-
-  if (!leesSleutel()) return;
-  if (eigen.length) {
     const tip = await nieuwVoorJou({ titels, diensten: eigen, dag: vandaag(), haalGenres, haalNieuw: haalNieuwOpDiensten }).catch(() => null);
     if (nr === schermNr && tip) {
       document.getElementById('nieuw-voor-jou').innerHTML = nieuwVoorJouHtml(tip);
@@ -925,15 +923,30 @@ async function toonVandaag() {
         toonBevestigen(tip, null, { naam: 'Vandaag', toon: () => toonVandaag() })
       );
     }
-  }
-
-  const stand = await werkAfleveringenBij(titels, vandaag(), haalAfleveringen);
-  const seizoenenNieuw = await werkSeizoenenBij(titels, stand);
-  if (nr !== schermNr) return;
-  if (seizoenenNieuw && document.getElementById('verder')) document.getElementById('verder').innerHTML = verder.map(verderKaart).join('');
-  const html = afleveringenHtml(titels, stand);
-  document.getElementById('afleveringen').innerHTML = html;
-  document.getElementById('afleveringen-blok').hidden = !html;
+  };
+  const npoBlok = async () => {
+    const npo = await haalNpo();
+    const avond = npo ? vanavond(npo.programmas, titels, new Date(), leesTvVoorkeuren()) : [];
+    if (nr === schermNr && avond.length) {
+      document.getElementById('npo').innerHTML = npoHtml(avond);
+      document.getElementById('npo-blok').hidden = false;
+      document.getElementById('npo').addEventListener('click', (e) => {
+        const knop = e.target.closest('[data-npo]');
+        if (knop) toonNpo(avond[Number(knop.dataset.npo)]);
+      });
+    }
+  };
+  const afleveringenBlok = async () => {
+    if (!leesSleutel()) return;
+    const stand = await werkAfleveringenBij(titels, vandaag(), haalAfleveringen);
+    const seizoenenNieuw = await werkSeizoenenBij(titels, stand);
+    if (nr !== schermNr) return;
+    if (seizoenenNieuw && document.getElementById('verder')) document.getElementById('verder').innerHTML = verder.map(verderKaart).join('');
+    const html = afleveringenHtml(titels, stand);
+    document.getElementById('afleveringen').innerHTML = html;
+    document.getElementById('afleveringen-blok').hidden = !html;
+  };
+  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, tipsBlokken(), npoBlok(), afleveringenBlok()]);
 }
 
 // Vanavond op de NPO: één grote tip (iets van je lijst gaat voor), en nog twee kleinere.
@@ -1758,7 +1771,7 @@ async function toonVoetbal(nr, mijn) {
        </div>`
     : '';
   if (!schema) {
-    vak().innerHTML = `${oranjeHtml}<p class="leeg">Het voetbalschema staat nog niet klaar. Zodra de sleutel van football-data.org in GitHub staat, verschijnt het hier (de volgende ochtend, of na de eerstvolgende nieuwe versie).</p>`;
+    vak().innerHTML = `${oranjeHtml}<p class="leeg">Het voetbalschema is nu even niet beschikbaar. Probeer het later nog eens.</p>`;
     return;
   }
   if (!keuzes.clubs.length && !keuzes.alles.length) {

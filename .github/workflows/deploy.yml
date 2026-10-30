@@ -9,10 +9,9 @@ on:
   schedule:
     - cron: '17 2 * * *'
 
+# Standaard alleen lezen; alleen de stap die online zet mag publiceren.
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -26,6 +25,7 @@ jobs:
         with:
           # De hele geschiedenis: de versie in de app is het moment van de laatste codewijziging.
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
@@ -60,6 +60,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

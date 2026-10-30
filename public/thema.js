@@ -4,11 +4,14 @@
 (function () {
   var AVOND_VAN = 20;
   var OCHTEND_TOT = 7;
+  // De gewone leesfunctie bewaren: src/opslag.js zet er later zelf 'app:' voor, en dan zou
+  // hier 'app:app:weergave' gelezen worden.
+  var lees = Storage.prototype.getItem;
 
   function keuze() {
     try {
       // Deze app bewaart zijn keuzes met het voorvoegsel 'app:' (zie src/opslag.js).
-      return localStorage.getItem('app:weergave') || 'donker';
+      return lees.call(localStorage, 'app:weergave') || 'donker';
     } catch (e) {
       return 'donker';
     }

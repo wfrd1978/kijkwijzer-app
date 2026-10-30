@@ -2,7 +2,7 @@
 import './opslag.js';
 import './style.css';
 import { veilig, veiligeUrl } from './veilig.js';
-import { soortSleutel, leesSleutel, bewaarSleutel, wisSleutel } from './sleutel.js';
+import { soortSleutel, leesSleutel, eigenSleutel, heeftGedeeldeSleutel, bewaarSleutel, wisSleutel } from './sleutel.js';
 import { zoekTitels, testSleutel, posterUrl, SleutelFout, haalDiensten, haalAlleDiensten, haalTrending, haalOpDiensten, haalAanbevelingen, haalTrailerEnActeurs, haalActeur, haalAfleveringen, haalGenres, haalNieuwOpDiensten } from './tmdb.js';
 import { kiesFavorieten, combineerTips } from './tips.js';
 import { haalF1, komendeRaces, nlTijd, F1_ZENDERS, ZENDER_GIDS, SPORTZENDERS, leesSportzenders, zetSportzenders } from './sport.js';
@@ -2297,6 +2297,26 @@ function competitiesStand() {
   return alles.length ? alles.join(', ') : 'Alleen je clubs';
 }
 
+// Uitleg en invulveld voor een eigen TMDB-sleutel.
+function eigenSleutelFormulier() {
+  return `<p>Kijkwijzer haalt titels, posters en waar je iets kunt kijken op bij TMDB, een gratis filmdatabase. Daarvoor heb je een eigen, gratis sleutel nodig. Dat is eenmalig ongeveer vijf minuten werk.</p>
+             <details class="uitklap stappen" open>
+               <summary><span class="uitklap-kop">Zo vraag je de sleutel aan</span></summary>
+               <ol>
+                 <li>Maak een gratis account op <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener noreferrer">themoviedb.org</a> en bevestig je e-mailadres.</li>
+                 <li>Ga naar <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Instellingen → API</a> en kies <b>Een API-sleutel aanvragen</b> (Create / Request an API key) en dan <b>Developer</b>.</li>
+                 <li>Vul het formulier in. Gebruik: <b>persoonlijk</b>. Naam van de app: <b>Kijkwijzer</b>. Adres: <b>${veilig(location.origin + import.meta.env.BASE_URL)}</b>. Omschrijving: <b>Mijn eigen kijklijst</b>.</li>
+                 <li>Kopieer daarna op dezelfde pagina het <b>API Read Access Token</b> (een lange tekst die begint met eyJ) en plak het hieronder.</li>
+               </ol>
+             </details>
+             <p class="zacht">De sleutel blijft op deze telefoon en gaat nergens anders heen dan naar TMDB.</p>
+             <form id="sleutel-form">
+               <textarea id="sleutel-veld" rows="3" placeholder="Plak hier je sleutel" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
+               <p class="fout" id="sleutel-fout" hidden></p>
+               <button class="hoofdknop" type="submit">Bewaar sleutel</button>
+             </form>`;
+}
+
 async function toonInstellingen() {
   const nr = schermNr;
   const sleutel = leesSleutel();
@@ -2386,27 +2406,19 @@ async function toonInstellingen() {
       <h2>Sleutel &amp; over</h2>
       <h3 class="blok-sub">TMDB-sleutel</h3>
       ${
-        sleutel
-          ? `<p>Je sleutel is ingesteld en staat alleen op deze telefoon.</p>
+        eigenSleutel()
+          ? `<p>Je eigen sleutel is ingesteld en staat alleen op deze telefoon.</p>
              <p class="zacht sleutel-kort">${soortSleutel(sleutel) === 'token' ? 'Read Access Token' : 'API Key'} · eindigt op ${veilig(sleutel.slice(-4))}</p>
              <button class="tweede-knop" id="sleutel-test">Test de sleutel</button>
-             <button class="link-knop" id="sleutel-weg">Sleutel verwijderen</button>`
-          : `<p>Kijkwijzer haalt titels, posters en waar je iets kunt kijken op bij TMDB, een gratis filmdatabase. Daarvoor heb je een eigen, gratis sleutel nodig. Dat is eenmalig ongeveer vijf minuten werk.</p>
-             <details class="uitklap stappen" open>
-               <summary><span class="uitklap-kop">Zo vraag je de sleutel aan</span></summary>
-               <ol>
-                 <li>Maak een gratis account op <a href="https://www.themoviedb.org/signup" target="_blank" rel="noopener noreferrer">themoviedb.org</a> en bevestig je e-mailadres.</li>
-                 <li>Ga naar <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Instellingen → API</a> en kies <b>Een API-sleutel aanvragen</b> (Create / Request an API key) en dan <b>Developer</b>.</li>
-                 <li>Vul het formulier in. Gebruik: <b>persoonlijk</b>. Naam van de app: <b>Kijkwijzer</b>. Adres: <b>${veilig(location.origin + import.meta.env.BASE_URL)}</b>. Omschrijving: <b>Mijn eigen kijklijst</b>.</li>
-                 <li>Kopieer daarna op dezelfde pagina het <b>API Read Access Token</b> (een lange tekst die begint met eyJ) en plak het hieronder.</li>
-               </ol>
-             </details>
-             <p class="zacht">De sleutel blijft op deze telefoon en gaat nergens anders heen dan naar TMDB.</p>
-             <form id="sleutel-form">
-               <textarea id="sleutel-veld" rows="3" placeholder="Plak hier je sleutel" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
-               <p class="fout" id="sleutel-fout" hidden></p>
-               <button class="hoofdknop" type="submit">Bewaar sleutel</button>
-             </form>`
+             <button class="link-knop" id="sleutel-weg">${heeftGedeeldeSleutel() ? 'Eigen sleutel verwijderen (dan weer de gedeelde)' : 'Sleutel verwijderen'}</button>`
+          : heeftGedeeldeSleutel()
+            ? `<p>De app gebruikt de gedeelde sleutel. Je hoeft hier niets te doen.</p>
+               <button class="tweede-knop" id="sleutel-test">Test de sleutel</button>
+               <details class="uitklap stappen">
+                 <summary><span class="uitklap-kop">Liever je eigen sleutel?</span></summary>
+                 ${eigenSleutelFormulier()}
+               </details>`
+            : eigenSleutelFormulier()
       }
       ${BRON}
       <p class="versie">Versie van ${__VERSIE__}</p>

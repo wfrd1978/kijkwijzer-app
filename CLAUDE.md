@@ -20,13 +20,13 @@ Adres: https://wfrd1978.github.io/kijkwijzer-app/
 | Bouwgereedschap | Vite + gewoon JavaScript, geen framework | Weinig onderdelen, makkelijk te volgen |
 | Opslag | IndexedDB op de telefoon via Dexie.js (database `kijkwijzer-app`) | Werkt offline; gegevens blijven bij de gebruiker |
 | Backup | JSON-bestand via het deelmenu | Gratis, de gebruiker houdt zijn eigen gegevens |
-| Film- en seriegegevens | TMDB; ieder vraagt een eigen gratis sleutel aan (uitleg in Instellingen) | Beste gratis bron, met Nederlandse streaminginformatie |
+| Film- en seriegegevens | TMDB, standaard met de gedeelde sleutel van de eigenaar (GitHub-geheim `TMDB_SLEUTEL`, bij het bouwen meegegeven als `VITE_TMDB_STANDAARD`); wie wil, plakt een eigen sleutel | Beste gratis bron, met Nederlandse streaminginformatie; gebruikers hoeven niets in te stellen |
 | Online zetten | GitHub Pages via GitHub Actions, bij elke push en elke nacht | Gratis; geen server nodig |
 | Voetbalschema | football-data.org, nachtelijks opgehaald door GitHub (`scripts/voetbal.mjs`), sleutel als GitHub-geheim `FOOTBALL_DATA_KEY` | De app mag football-data niet zelf aanroepen |
 | Bekers en Europa League | TheSportsDB, vanuit de app, per club de eerstvolgende wedstrijd | Gratis aanvulling op football-data |
 | ESPN-kanaal Eredivisie, NPO-gids | Nachtelijks opgehaald door GitHub (`scripts/espn.mjs`, `scripts/npo.mjs`) | Openbare pagina's; niet vanuit de app op te halen |
 
-Geen betaalde diensten, geen eigen server en geen sleutels in de code.
+Geen betaalde diensten, geen eigen server en geen sleutels in de code. Let op: de gedeelde TMDB-sleutel staat niet in de code, maar wel in de gebouwde app (dat is bij een app zonder server niet te voorkomen). Gebruik daarom het Read Access Token (alleen lezen), van een TMDB-account zonder persoonsgegevens van de eigenaar. Wordt hij misbruikt of geblokkeerd, dan maakt de eigenaar een nieuw token en vervangt het geheim.
 
 ## Opslag gescheiden van de andere app (belangrijk)
 

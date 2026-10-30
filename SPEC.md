@@ -22,7 +22,7 @@ Deze app is gestart als kopie van de eigen Kijkwijzer van de eigenaar (oktober 2
 
 ## Instellingen
 
-Wat ik heb en volg (diensten, voetbal, tv-tips, sportzenders), backup maken en terugzetten, weergave (donker, licht, 's avonds donker, zoals de telefoon), en de TMDB-sleutel met een uitleg in vier stappen.
+Wat ik heb en volg (diensten, voetbal, tv-tips, sportzenders), backup maken en terugzetten, weergave (donker, licht, 's avonds donker, zoals de telefoon), en de TMDB-sleutel. Standaard gebruikt de app de gedeelde sleutel, zodat nieuwe gebruikers meteen kunnen beginnen; wie wil, vult onder 'Liever je eigen sleutel?' een eigen sleutel in (met uitleg in vier stappen). Haal je die weer weg, dan gebruikt de app weer de gedeelde.
 
 ## Werklijst
 

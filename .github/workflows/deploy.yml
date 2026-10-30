@@ -48,7 +48,11 @@ jobs:
       - name: NPO-gids ophalen
         run: node scripts/npo.mjs
         continue-on-error: true
+      # De gedeelde TMDB-sleutel (GitHub-geheim TMDB_SLEUTEL) gaat mee in de app, zodat
+      # gebruikers niets hoeven in te voeren. Hij staat niet in de code; wie wil, plakt een eigen sleutel.
       - run: npm run build
+        env:
+          VITE_TMDB_STANDAARD: ${{ secrets.TMDB_SLEUTEL }}
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: dist

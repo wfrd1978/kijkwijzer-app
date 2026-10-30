@@ -1783,7 +1783,9 @@ async function toonVoetbal(nr, mijn) {
   const volgendeMaandag = new Date(`${maandag}T12:00:00Z`);
   volgendeMaandag.setUTCDate(volgendeMaandag.getUTCDate() + 7);
   const grens = volgendeMaandag.toISOString().slice(0, 10);
-  const inWeek = (d) => (voetbalWeek === 'deze' ? d.dag >= vandaag() && d.dag < grens : d.dag >= grens);
+  volgendeMaandag.setUTCDate(volgendeMaandag.getUTCDate() + 7);
+  const naGrens = volgendeMaandag.toISOString().slice(0, 10);
+  const inWeek = (d) => (voetbalWeek === 'deze' ? d.dag >= vandaag() && d.dag < grens : d.dag >= grens && d.dag < naGrens);
   const kanalen = await haalEspn();
   if (!vak()) return;
   const rij = (w) => {
@@ -1922,7 +1924,7 @@ async function toonActeur(id, { terugNaarPlek = false } = {}) {
     return;
   }
   const terug = '<header class="kop"><button class="terug" id="terug">‹ Terug</button></header>';
-  const koppelTerug = () => document.getElementById('terug').addEventListener('click', () => history.back());
+  const koppelTerug = () => document.getElementById('terug').addEventListener('click', () => (binnenApp ? history.back() : (location.hash = '#/films')));
   let acteur = acteurGeladen.get(id);
   if (!acteur) {
     app.innerHTML = `${terug}<p class="bezig">Ophalen…</p>`;
@@ -2230,7 +2232,8 @@ async function toonTitel(id, { naarSterren = false } = {}) {
       tekst: 'Ongedaan maken',
       actie: async () => {
         await titelTerugzetten(kopie);
-        if (location.hash === '#/' || location.hash === '') route();
+        // Staat je lijst of Vandaag open, dan meteen bijwerken.
+        if (['', '#/', '#/films'].includes(location.hash)) route();
       },
     });
   });
@@ -2601,6 +2604,22 @@ async function toonInstellingen() {
       () => (bestand = null)
     );
   if (aantal) klaarmaken();
+  // Verandert er iets in Instellingen (diensten, voetbal, weergave…), dan een verse backup
+  // klaarmaken, zodat die keuzes er ook in zitten.
+  let opnieuw;
+  const instellingen = app.querySelector('.instellingen');
+  const verversBackup = (e) => {
+    if (!aantal || e.target.closest?.('#backup-blok')) return;
+    clearTimeout(opnieuw);
+    opnieuw = setTimeout(() => {
+      if (maakKnop.disabled) return;
+      bestand = null;
+      maakKnop.textContent = 'Backup maken';
+      klaarmaken();
+    }, 300);
+  };
+  instellingen?.addEventListener('click', verversBackup);
+  instellingen?.addEventListener('change', verversBackup);
   maakKnop.addEventListener('click', async () => {
     if (!bestand) {
       maakKnop.disabled = true;
@@ -2786,6 +2805,18 @@ setTimeout(async () => {
 // Ook als de app terug in beeld komt (op de iPhone start hij dan niet opnieuw op).
 setTimeout(werkExtraWedstrijdenBij, 1500);
 document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && werkExtraWedstrijdenBij());
+
+// Op de iPhone blijft de app vaak dagen open in de achtergrond. Komt hij terug op een nieuwe dag,
+// dan Vandaag, Deze week en Sport opnieuw opbouwen en de dagelijkse controles opnieuw doen.
+let dagBijOpenen = vandaag();
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible' || vandaag() === dagBijOpenen) return;
+  dagBijOpenen = vandaag();
+  ruimOudeDagenOp();
+  if (['', '#/', '#/week', '#/sport'].includes(location.hash)) route();
+  await vulActeursAan();
+  await controleerNieuw();
+});
 
 window.addEventListener('hashchange', () => {
   binnenApp = true;

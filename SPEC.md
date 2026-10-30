@@ -31,7 +31,9 @@ De eerste keer (lege lijst) opent de app met een paar korte stappen: je voornaam
 
 ## Eenvoudiger welkom en updates
 
-De welkomststappen stellen alleen de hoofdvragen, elk met een korte uitleg waarom: je naam; welke streamingdiensten je hebt (knoppen om aan te tikken, uit een vaste lijst van twintig); 'Volg je sport?' (Ja of Nee); alleen bij Ja: waar je sport kijkt, met een voetbalclub als optie; en wat je graag op tv ziet. Hele competities, omroepen en licht of donker staan alleen in Instellingen. Instellingen toont dezelfde vaste lijst van twintig streamingdiensten.
+De welkomststappen stellen alleen de hoofdvragen, elk met een korte uitleg waarom: je naam; welke streamingdiensten je hebt (knoppen om aan te tikken, uit een vaste lijst van twintig); 'Volg je sport?' (Ja of Nee); alleen bij Ja: waar je sport kijkt, met een voetbalclub als optie; en wat je graag op tv ziet. Hele competities, omroepen en licht of donker staan alleen in Instellingen. In de eerste vragen staan zeventien diensten: MUBI, Hayu en CineMember staan alleen in Instellingen.
+
+**Geen sport.** Wie 'Nee' zegt op 'Volg je sport?' (of in Instellingen bij Sport 'Sport volgen' uitzet), ziet nergens meer sport: geen Sport-knop onderin, niets op Vandaag en in Deze week, en de app haalt ook niets meer op over sport. Alleen in Instellingen blijven de sportkeuzes staan; zet je Sport volgen aan, dan komt alles meteen terug. Instellingen toont dezelfde vaste lijst van twintig streamingdiensten.
 
 Het adres van de app blijft altijd https://wfrd1978.github.io/kijkwijzer-app/; elke verbetering komt onder dat adres. Opent iemand de app (of komt hij terug in beeld) en staat er een nieuwe versie klaar, dan laadt de app die meteen zelf, zolang er nog niets is aangetikt. Is iemand al bezig, dan verschijnt de knop 'Nieuwe versie klaar', zodat er nooit iets halverwege wegvalt.
 

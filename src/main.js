@@ -802,7 +802,7 @@ async function weekHtml(titels, stand) {
     <p class="bron">${
       metSport
         ? 'Alleen wat jij volgt: nieuwe afleveringen en NPO-uitzendingen van titels op je lijst, en in Sport je clubs en competities, Oranje, Formule 1 (kwalificatie en race) en wielrennen.'
-        : 'Nieuwe afleveringen en NPO-uitzendingen van titels op je lijst, en elke avond tv-tips op de genres en omroepen die je in Instellingen koos. Sport staat uit; die vind je onderin bij Sport.'
+        : 'Nieuwe afleveringen en NPO-uitzendingen van titels op je lijst, en elke avond tv-tips op de genres en omroepen die je in Instellingen koos. Sport staat uit; aanzetten kan in Instellingen.'
     } Tijden in Nederlandse tijd; afleveringen volgens TMDB.</p>`;
 }
 
@@ -882,7 +882,8 @@ function nieuwVoorJouHtml(t) {
     <p class="bron">Elke dag een andere tip, gekozen op de genres van wat je hoog waardeert en wilt zien.</p>`;
 }
 
-// Sport op Vandaag aan of uit (in Instellingen, bij Weergave). Uit: dan kijktips op die plek.
+// Sport volgen aan of uit (in Instellingen, bij Sport). Uit: nergens sport in de app (geen Sport-knop,
+// niets op Vandaag en in Deze week, niets ophalen), en op Vandaag kijktips op die plek.
 const sportOpVandaag = () => onthoud('vandaagSport', 'aan', ['aan', 'uit']) === 'aan';
 
 // De waardering van kijkers (0 tot 10) als vijf sterren, met het cijfer erbij.
@@ -1768,6 +1769,7 @@ function leesExtra() {
 // TheSportsDB opvragen, voor wat football-data gratis niet heeft, zoals de beker.
 let extraBezig = false;
 async function werkExtraWedstrijdenBij() {
+  if (!sportOpVandaag()) return;
   const keuzes = leesVoetbalKeuzes();
   const sleutel = `${dagSleutel()}|${keuzes.clubs.join(',')}`;
   if (extraBezig || !keuzes.clubs.length || leesExtra()?.sleutel === sleutel) return;
@@ -2537,7 +2539,7 @@ async function toonInstellingen({ welkom = null } = {}) {
       <h2>Sport</h2>
       <div class="kaart">
       <div data-groep="sportvandaag" class="rij">
-        <span><span class="rij-kop">Sport op Vandaag</span><span class="zacht rij-stand">Uit: kijktips op die plek</span></span>
+        <span><span class="rij-kop">Sport volgen</span><span class="zacht rij-stand">Uit: nergens sport, wel extra kijktips</span></span>
         <div class="keuzes schakelaar" id="vandaag-sport">
           <button class="keuze${sportOpVandaag() ? ' actief' : ''}" data-sport="aan">Aan</button>
           <button class="keuze${sportOpVandaag() ? '' : ' actief'}" data-sport="uit">Uit</button>
@@ -2711,6 +2713,8 @@ async function toonInstellingen({ welkom = null } = {}) {
     if (!knop) return;
     bewaarKeuze('vandaagSport', knop.dataset.sport);
     document.querySelectorAll('#vandaag-sport .keuze').forEach((k) => k.classList.toggle('actief', k === knop));
+    document.querySelector('.balk a[data-plek="sport"]')?.toggleAttribute('hidden', !sportOpVandaag());
+    if (sportOpVandaag()) werkExtraWedstrijdenBij();
   });
 
   document.getElementById('weergave').addEventListener('click', (e) => {
@@ -3016,13 +3020,16 @@ function welkomKader(stap) {
   return kader;
 }
 
+const NIET_IN_WELKOM = [11, 223, 639]; // MUBI, Hayu, CineMember
+
 // Streamingdiensten als eenvoudige knoppen: aantikken is Abonnement.
 async function welkomDiensten(kader, nr) {
   const vak = kader.querySelector('.welkom-groepen');
   vak.innerHTML = '<p class="zacht welkom-diensten">Diensten ophalen…</p>';
   let lijst;
   try {
-    lijst = beperkDiensten(await haalAlleDiensten(), leesKeuzes());
+    // In de eerste vragen alleen de bekende diensten; MUBI, Hayu en CineMember staan wel in Instellingen.
+    lijst = beperkDiensten(await haalAlleDiensten(), leesKeuzes()).filter((d) => !NIET_IN_WELKOM.includes(d.id) || keuzeVan(leesKeuzes(), d.id) === 'abonnement');
   } catch {
     if (nr === schermNr) vak.innerHTML = '<p class="zacht welkom-diensten">Ophalen lukt nu niet. Ga gerust verder; je kiest ze later in Instellingen.</p>';
     return;
@@ -3077,6 +3084,9 @@ async function route() {
   document.body.classList.toggle('welkom-modus', Boolean(welkomStap));
   // Oude adressen (van voor de nieuwe indeling) komen uit bij Mijn lijst.
   if (location.hash === '#/zoek') history.replaceState(null, '', '#/films');
+  // Sport uit: dan nergens sport, behalve in Instellingen (daar zet je het weer aan).
+  document.querySelector('.balk a[data-plek="sport"]')?.toggleAttribute('hidden', !sportOpVandaag());
+  if (location.hash === '#/sport' && !sportOpVandaag()) history.replaceState(null, '', '#/');
   const plek =
     { '#/films': 'films', '#/ontdekken': 'ontdekken', '#/week': 'week', '#/sport': 'sport', '#/instellingen': 'instellingen', '#/instellingen/backup': 'instellingen' }[location.hash] || (titelId || acteurId ? 'films' : 'vandaag');
   document.querySelectorAll('.balk a').forEach((a) => a.classList.toggle('actief', a.dataset.plek === (plek === 'ontdekken' ? 'films' : plek)));

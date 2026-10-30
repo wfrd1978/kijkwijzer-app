@@ -6,6 +6,8 @@ Lees dit bestand en SPEC.md aan het begin van elke sessie.
 
 Kijkwijzer is een rustige mobiele webapp om films, series en sport bij te houden: snel toevoegen, zien waar je iets kunt kijken, en je eigen oordeel bewaren. Deze repository (`kijkwijzer-app`) is de versie die de eigenaar deelt met familie en vrienden. Ieder gebruikt de app op zijn eigen telefoon; alles wat iemand invult, blijft daar.
 
+**Woordgebruik:** de eigenaar spreekt van **"de gedeelde app"** (deze repository) en **"mijn eigen app"** (`kijkwijzer`). Standaard wordt er in mijn eigen app ontwikkeld; deze gedeelde app wordt alleen aangepast als de eigenaar daar specifiek om vraagt.
+
 De eigenaar heeft daarnaast een eigen Kijkwijzer (repository `kijkwijzer`, op /kijkwijzer/) die los hiervan wordt ontwikkeld en als proeftuin dient. Verbeteringen van daar komen hier alleen als de eigenaar daarom vraagt. De eigenaar is geen programmeur. Eenvoud gaat boven features.
 
 Adres: https://wfrd1978.github.io/kijkwijzer-app/

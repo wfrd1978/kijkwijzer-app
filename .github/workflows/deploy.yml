@@ -1,0 +1,64 @@
+name: Online zetten
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  # Elke nacht opnieuw (02:17 UTC = 03:17 of 04:17 Nederlandse tijd, ruim vóór 06:00),
+  # voor een vers voetbalschema, de ESPN-kanalen en de NPO-gids.
+  schedule:
+    - cron: '17 2 * * *'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          # De hele geschiedenis: de versie in de app is het moment van de laatste codewijziging.
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Eerst de tests: faalt er één, dan wordt er niets online gezet.
+      - run: npm test
+      # Voetbalschema van football-data.org; de sleutel staat als geheim in GitHub, niet in de code.
+      # Lukt het niet, dan gaat het online zetten gewoon door (de app toont dan een melding).
+      - name: Voetbalschema ophalen
+        run: node scripts/voetbal.mjs
+        env:
+          FOOTBALL_DATA_KEY: ${{ secrets.FOOTBALL_DATA_KEY }}
+        continue-on-error: true
+      # Op welk ESPN-kanaal elke Eredivisie-wedstrijd komt (openbare pagina van Ziggo).
+      - name: ESPN-kanalen ophalen
+        run: node scripts/espn.mjs
+        continue-on-error: true
+      # Avonden op NPO 1, 2 en 3 voor Vanavond op de NPO (gids van npo.nl, zonder sleutel).
+      - name: NPO-gids ophalen
+        run: node scripts/npo.mjs
+        continue-on-error: true
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

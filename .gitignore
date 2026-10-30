@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+public/voetbal.json
+public/npo.json
+public/espn.json
+
+# Testafbeeldingen horen niet in de repository
+/*.png

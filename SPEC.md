@@ -28,6 +28,12 @@ Wat ik heb en volg (diensten, voetbal, tv-tips, sportzenders), backup maken en t
 
 De eerste keer (lege lijst) opent de app met een paar korte stappen: je voornaam, je streamingdiensten, sport (Sport op Vandaag, sportzenders, voetbal), tv-tips en licht of donker. Met de gedeelde sleutel is er geen sleutelstap; zonder vraagt de app om een eigen sleutel. Overslaan kan altijd, en wie een backup heeft, zet die meteen terug. In Instellingen staat 'Welkomststappen opnieuw doorlopen'. Je naam staat alleen op de telefoon en in je backup en komt terug als 'Goedemiddag, …' onder de kop Vandaag. Instellingen is ingedeeld in rustige kaarten (je naam, Kijken, Sport, Backup, Weergave, Sleutel & over), met per keuze één regel en de uitleg in de opengeklapte regel.
 
+## Eenvoudiger welkom en updates
+
+De welkomststappen stellen alleen de hoofdvragen, elk met een korte uitleg waarom: je naam; welke streamingdiensten je hebt (knoppen om aan te tikken, uit een vaste lijst van twintig); 'Volg je sport?' (Ja of Nee); alleen bij Ja: waar je sport kijkt, met een voetbalclub als optie; en wat je graag op tv ziet. Hele competities, omroepen en licht of donker staan alleen in Instellingen. Instellingen toont dezelfde vaste lijst van twintig streamingdiensten.
+
+Het adres van de app blijft altijd https://wfrd1978.github.io/kijkwijzer-app/; elke verbetering komt onder dat adres. Opent iemand de app (of komt hij terug in beeld) en staat er een nieuwe versie klaar, dan laadt de app die meteen zelf, zolang er nog niets is aangetikt. Is iemand al bezig, dan verschijnt de knop 'Nieuwe versie klaar', zodat er nooit iets halverwege wegvalt.
+
 ## Backup
 
 Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de achtergrond niets naar je cloud sturen, en er is bewust geen eigen server. Daarom maakt de app het backupbestand al klaar zodra je Instellingen opent; één tik op Backup maken opent meteen het deelmenu. Kies Bewaar in Bestanden (iCloud Drive of Google Drive) of de Drive-app; de telefoon onthoudt de map. Na 14 dagen herinnert de app je eraan.

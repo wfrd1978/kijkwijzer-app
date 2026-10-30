@@ -784,3 +784,10 @@ p.rij { display: block; }
 .knoppen-rij .tweede-knop { width: auto; padding: 9px 16px; }
 #welkom-opnieuw { display: block; margin: 14px auto 0; padding: 8px 0; text-align: center; font-size: 0.95rem; }
 .welkom-groepen .nieuw-uitleg, .welkom-groepen #nieuw-nu, .welkom-groepen #nieuw-uitkomst { display: none; }
+/* Welkomststappen: alleen de hoofdzaken */
+.welkom-groepen #competities-uitklap, .welkom-groepen #tv-omroepen-uitklap { display: none; }
+.welkom-diensten { padding: 14px 0; }
+.welkom-antwoord { display: grid; gap: 10px; margin-top: 22px; }
+.welkom-antwoord .tweede-knop, .welkom-antwoord .hoofdknop { margin: 0; }
+.welkom-later-uitleg { margin-top: 4px; text-align: center; }
+.welkom-groepen .uitklap-uitleg { display: none; }

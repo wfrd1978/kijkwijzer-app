@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { verdeelDiensten, doorklikLink, keuzeVan, alleKeuzes, nieuwBijJou } from '../src/diensten.js';
+import { verdeelDiensten, doorklikLink, keuzeVan, alleKeuzes, nieuwBijJou, beperkDiensten, NL_DIENSTEN } from '../src/diensten.js';
 import { naarDienstenLijst } from '../src/tmdb.js';
 
 const n = { id: 8, naam: 'Netflix', logo: '' };
@@ -92,5 +92,18 @@ describe('NPO Plus en NPO Start', () => {
     expect(met.gratis).toEqual([]);
     const zonder = verdeelDiensten(d, { 72: 'abonnement' });
     expect(zonder.bijJou.map((x) => x.naam)).toEqual(['NPO Start']);
+  });
+});
+
+describe('beperkDiensten', () => {
+  const alle = [{ id: 223 }, { id: 2 }, { id: 8 }, { id: 999 }, { id: 72 }];
+  it('toont alleen de vaste lijst, in volgorde', () => {
+    expect(beperkDiensten(alle, {}).map((d) => d.id)).toEqual([8, 72, 223]);
+  });
+  it('houdt diensten waarvoor je zelf iets koos', () => {
+    expect(beperkDiensten(alle, { 999: 'abonnement', 2: 'verbergen' }).map((d) => d.id)).toEqual([8, 72, 223, 2, 999]);
+  });
+  it('heeft twintig verschillende diensten', () => {
+    expect(new Set(NL_DIENSTEN).size).toBe(20);
   });
 });

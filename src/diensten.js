@@ -36,6 +36,40 @@ export function zetAlleKeuzes(ids, keuze) {
   localStorage.setItem(OPSLAG, JSON.stringify(alleKeuzes(leesKeuzes(), ids, keuze)));
 }
 
+// De streamingdiensten die je in Instellingen ziet (TMDB-nummers, in deze volgorde). TMDB kent er
+// voor Nederland ruim zeventig; de meeste zijn klein of alleen een kanaal binnen Prime Video.
+// Ziggo Sport staat er niet bij: dat is voor TMDB een zender, en staat bij Sportzenders.
+export const NL_DIENSTEN = [
+  8, // Netflix
+  175, // Netflix Kids
+  72, // Videoland
+  360, // NPO Start
+  1986, // NPO Plus
+  337, // Disney Plus
+  1899, // HBO Max
+  119, // Amazon Prime Video
+  350, // Apple TV
+  1773, // SkyShowtime
+  76, // Viaplay
+  381, // Canal+
+  472, // NLZIET
+  563, // KPN
+  297, // Ziggo TV
+  // Aangevuld met vijf andere die in Nederland veel gebruikt worden:
+  71, // Pathé Thuis
+  396, // Film1
+  11, // MUBI
+  223, // Hayu
+  639, // CineMember
+];
+
+// Alleen de diensten uit de lijst hierboven, plus wat je zelf al op Abonnement of Verbergen zette
+// (zodat je die keuze altijd terug kunt draaien). Eerst de vaste lijst, in volgorde.
+export function beperkDiensten(alle, keuzes) {
+  const plek = (d) => (NL_DIENSTEN.includes(d.id) ? NL_DIENSTEN.indexOf(d.id) : NL_DIENSTEN.length);
+  return alle.filter((d) => NL_DIENSTEN.includes(d.id) || keuzeVan(keuzes, d.id) !== 'tonen').sort((a, b) => plek(a) - plek(b));
+}
+
 export function keuzeVan(keuzes, id) {
   return keuzes[id] in KEUZES ? keuzes[id] : 'tonen';
 }

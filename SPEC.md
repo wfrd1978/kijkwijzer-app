@@ -24,6 +24,10 @@ Deze app is gestart als kopie van de eigen Kijkwijzer van de eigenaar (oktober 2
 
 Wat ik heb en volg (diensten, voetbal, tv-tips, sportzenders), backup maken en terugzetten, weergave (donker, licht, 's avonds donker, zoals de telefoon), en de TMDB-sleutel. Standaard gebruikt de app de gedeelde sleutel, zodat nieuwe gebruikers meteen kunnen beginnen; wie wil, vult onder 'Liever je eigen sleutel?' een eigen sleutel in (met uitleg in vier stappen). Haal je die weer weg, dan gebruikt de app weer de gedeelde.
 
+## Welkom, je naam en Instellingen
+
+De eerste keer (lege lijst) opent de app met een paar korte stappen: je voornaam, je streamingdiensten, sport (Sport op Vandaag, sportzenders, voetbal), tv-tips en licht of donker. Met de gedeelde sleutel is er geen sleutelstap; zonder vraagt de app om een eigen sleutel. Overslaan kan altijd, en wie een backup heeft, zet die meteen terug. In Instellingen staat 'Welkomststappen opnieuw doorlopen'. Je naam staat alleen op de telefoon en in je backup en komt terug als 'Goedemiddag, …' onder de kop Vandaag. Instellingen is ingedeeld in rustige kaarten (je naam, Kijken, Sport, Backup, Weergave, Sleutel & over), met per keuze één regel en de uitleg in de opengeklapte regel.
+
 ## Backup
 
 Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de achtergrond niets naar je cloud sturen, en er is bewust geen eigen server. Daarom maakt de app het backupbestand al klaar zodra je Instellingen opent; één tik op Backup maken opent meteen het deelmenu. Kies Bewaar in Bestanden (iCloud Drive of Google Drive) of de Drive-app; de telefoon onthoudt de map. Na 14 dagen herinnert de app je eraan.

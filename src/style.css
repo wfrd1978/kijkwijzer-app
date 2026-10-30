@@ -728,3 +728,59 @@ span.embleem { display: inline-flex; align-items: center; justify-content: cente
 .kijktip-wat .zacht { font-size: 0.82rem; }
 .score { font-size: 0.85rem; font-weight: 700; }
 .score-sterren { color: var(--ster); letter-spacing: 1px; }
+
+/* Welkomststappen (de eerste keer) */
+.welkom-modus .balk { display: none; }
+.welkom-stap { padding: 28px 0 32px; }
+.welkom-stap h1 { margin: 6px 0 10px; }
+.welkom-stap > p { margin: 0 0 12px; }
+.welkom-teller { margin: 0; color: var(--zacht); font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.welkom-voortgang { height: 4px; margin: 8px 0 18px; border-radius: 2px; background: var(--lijn); overflow: hidden; }
+.welkom-voortgang span { display: block; height: 100%; background: var(--accent); }
+.welkom-groepen { margin-top: 16px; }
+.welkom-groepen > [data-groep] + [data-groep] { margin-top: 18px; }
+.welkom-onder { margin-top: 18px; text-align: center; color: var(--zacht); }
+.welkom-onder a { color: inherit; }
+.welkom-klaar { text-align: center; padding-top: 64px; }
+.welkom-klaar .tweede-knop { display: block; width: 100%; margin-top: 10px; }
+.veld { display: flex; flex-direction: column; gap: 6px; margin: 16px 0 6px; font-weight: 600; }
+.veld input { padding: 12px 14px; font-size: 16px; font-weight: 400; border: 1px solid var(--lijn); border-radius: 12px; background: var(--vlak); color: var(--tekst); min-height: 48px; }
+
+/* Groet onder de kop van Vandaag */
+.schermkop .groet { margin: 6px 0 0; font-size: 1.05rem; color: var(--zacht); }
+
+/* Instellingen: rustige kaarten met één regel per keuze */
+.instellingen .blok + .blok { margin-top: 26px; padding-top: 0; border-top: 0; }
+.instellingen .blok h2 { margin: 0 0 8px 4px; font-size: 0.95rem; letter-spacing: 0.14em; color: var(--zacht); }
+.kaart { background: var(--vlak); border-radius: 16px; padding: 0 16px; overflow: hidden; }
+.kaart-ruim { padding: 16px; }
+.kaart .uitklap, .kaart .rij { margin: 0; border: 0; border-radius: 0; padding: 0; border-bottom: 1px solid var(--lijn); }
+.kaart > :last-child, .kaart > [data-groep]:last-child > :last-child { margin-bottom: -1px; }
+.kaart .uitklap > summary { padding-top: 14px; padding-bottom: 14px; }
+.kaart .uitklap-kop, .rij-kop { display: block; color: var(--tekst); font-weight: 600; }
+.kaart .uitklap-stand, .rij-stand { display: block; font-size: 0.88rem; }
+.kaart .uitklap[open] { padding-bottom: 16px; }
+.uitklap-uitleg { margin: 0 0 12px; font-size: 0.9rem; }
+.rij { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0 !important; }
+p.rij { display: block; }
+.schakelaar { flex-wrap: nowrap; gap: 4px; padding: 3px; border-radius: 999px; background: var(--bg); }
+.schakelaar .keuze { border: 0; padding: 6px 14px; }
+.kaart-ruim .uitklap-klein { border-bottom: 0; margin-top: 8px; }
+.kaart-ruim .uitklap-klein > summary { padding: 8px 0; }
+.kaart-ruim .uitklap-klein .uitklap-kop { color: var(--accent); font-weight: 500; }
+.backup-status { margin: 0 0 4px; }
+.kaart-ruim .hoofdknop { margin-top: 10px; }
+.kaart .klein { margin-top: 12px; }
+.knoppen-rij { display: flex; align-items: center; gap: 16px; margin-top: 10px; }
+.knoppen-rij .tweede-knop { margin: 0; }
+.knoppen-rij .link-knop { padding: 0; color: var(--zacht); }
+.profiel-kaart { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.profiel-letter { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--accent); color: var(--accent-tekst); font-family: var(--kop); font-weight: 800; font-size: 1.6rem; }
+.profiel-naam { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.klein-label { font-size: 0.8rem; }
+.profiel-naam input { border: 0; padding: 0; background: transparent; color: var(--tekst); font-size: 1.25rem; font-weight: 600; outline: none; min-width: 0; }
+.onder-kaart { margin: 8px 4px 0; font-size: 0.85rem; }
+.instellingen > .link-knop { align-self: center; padding: 20px 0 4px; font-size: 0.95rem; }
+.knoppen-rij .tweede-knop { width: auto; padding: 9px 16px; }
+#welkom-opnieuw { display: block; margin: 14px auto 0; padding: 8px 0; text-align: center; font-size: 0.95rem; }
+.welkom-groepen .nieuw-uitleg, .welkom-groepen #nieuw-nu, .welkom-groepen #nieuw-uitkomst { display: none; }

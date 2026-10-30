@@ -62,6 +62,17 @@ export function afleveringenOp(titels, stand, dagen) {
   return uit.sort((a, b) => a.dag.localeCompare(b.dag) || a.titel.titel.localeCompare(b.titel.titel));
 }
 
+// Wat er na deze week komt (tot twee maanden vooruit): per serie de eerstvolgende aflevering.
+export function afleveringenNa(titels, stand, naDag, dagenVooruit = 60) {
+  const tot = new Date(`${naDag}T12:00:00Z`);
+  tot.setUTCDate(tot.getUTCDate() + dagenVooruit);
+  const grens = tot.toISOString().slice(0, 10);
+  return gevolgdeSeries(titels)
+    .map((t) => ({ titel: t, ...stand[t.tmdbId]?.volgende }))
+    .filter((e) => e.dag && e.dag > naDag && e.dag <= grens)
+    .sort((a, b) => a.dag.localeCompare(b.dag) || a.titel.titel.localeCompare(b.titel.titel));
+}
+
 // 'S5 · A3'
 export function afleveringKort(e) {
   return `S${e.seizoen} · A${e.aflevering}`;

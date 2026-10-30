@@ -18,7 +18,7 @@ import { haalExtraWedstrijden, alBekend, EXTRA_ZENDERS } from './beker.js';
 import { vanVandaag, ruimOudeDagenOp, dagSleutel } from './dagcache.js';
 import { nieuwVoorJou, kijktipsVanDag, GENRE_NAMEN } from './nieuw.js';
 import { vanavond, lijstOpNpo, npoLink, TV_GENRES, leesTvVoorkeuren, zetTvVoorkeuren, omroepenIn, metKorteNamen } from './tv.js';
-import { leesAfleveringen, werkAfleveringenBij, afleveringenOp, afleveringKort } from './afleveringen.js';
+import { leesAfleveringen, werkAfleveringenBij, afleveringenOp, afleveringenNa, afleveringKort } from './afleveringen.js';
 import { KEUZES, leesKeuzes, zetKeuze, zetAlleKeuzes, keuzeVan, nieuwBijJou, verdeelDiensten, doorklikLink, beperkDiensten } from './diensten.js';
 import { alleTitels, titelToevoegen, vraagBlijvendeOpslag, haalTitel, titelBijwerken, titelVerwijderen, titelTerugzetten } from './db.js';
 import { maakBackupBestand, bewaarBackup, laatsteBackup, dagenSinds, moetHerinneren, herinnerLater, leesBackup, zetBackupTerug } from './backup.js';
@@ -710,9 +710,9 @@ function dienstVan(t) {
 }
 
 // Alles wat jij volgt op deze dagen: sport, wat van je lijst op NPO komt, en nieuwe afleveringen.
-async function agendaItems(titels, stand, dagen) {
+async function agendaItems(titels, stand, dagen, { sport = true } = {}) {
   return [
-    ...(await sportItems(dagen)),
+    ...(sport ? await sportItems(dagen) : []),
     // Nieuwe afleveringen staan bovenaan hun dag.
     // Wat van je Wil ik zien deze week op NPO komt.
     ...lijstOpNpo((await haalNpo())?.programmas ?? [], titels, dagen).map((p) => ({
@@ -761,12 +761,20 @@ async function weekHtml(titels, stand) {
   const mijn = leesSportzenders();
   const dagen = weekDagen(vandaag());
   // In het weekoverzicht bij de Formule 1 alleen wat telt: kwalificatie, sprint en race.
-  const items = (await agendaItems(titels, stand, dagen)).filter((x) => x.soort !== 'f1' || !/^Vrije training/.test(x.sessie));
+  const metSport = sportOpVandaag();
+  const programmas = (await haalNpo())?.programmas ?? [];
+  const items = [
+    ...(await agendaItems(titels, stand, dagen, { sport: metSport })).filter((x) => x.soort !== 'f1' || !/^Vrije training/.test(x.sessie)),
+    // Zonder sport: elke avond twee tv-tips (op je genres en omroepen), zoals bij Vanavond op de NPO.
+    ...(metSport ? [] : tvTipsVoorWeek(programmas, titels, dagen)),
+  ].sort((a, b) => a.start.localeCompare(b.start));
+  const later = afleveringenNa(titels, stand, dagen.at(-1));
   const voorbij = dagen.filter((d) => d < vandaag());
   const telling = [
     [items.filter((x) => x.soort === 'voetbal' || x.soort === 'oranje').length, 'wedstrijd', 'wedstrijden'],
     [items.filter((x) => x.soort === 'serie').length, 'nieuwe aflevering', 'nieuwe afleveringen'],
-    [items.filter((x) => x.soort === 'npo').length, 'keer op NPO', 'keer op NPO'],
+    [items.filter((x) => x.soort === 'npo' && !x.tip).length, 'keer op NPO', 'keer op NPO'],
+    [items.filter((x) => x.tip).length, 'tv-tip', 'tv-tips'],
     [items.filter((x) => x.soort === 'f1' || x.soort === 'wiel').length, 'race of koers', 'races en koersen'],
   ].filter(([n]) => n);
   const dagKop = (dag) => {
@@ -790,7 +798,53 @@ async function weekHtml(titels, stand) {
     ${telling.length ? `<div class="week-telling">${telling.map(([n, een, meer]) => `<span><strong>${n}</strong> ${n === 1 ? een : meer}</span>`).join('')}</div>` : ''}
     ${voorbij.length ? `<p class="week-voorbij zacht">${voorbij.length === 1 ? 'Maandag is' : `Maandag tot en met ${new Date(`${voorbij.at(-1)}T12:00:00Z`).toLocaleDateString('nl-NL', { weekday: 'long', timeZone: 'UTC' })} zijn`} voorbij.</p>` : ''}
     ${kaarten.join('')}
-    <p class="bron">Alleen wat jij volgt: nieuwe afleveringen en NPO-uitzendingen van titels op je lijst, en in Sport je clubs en competities, Oranje, Formule 1 (kwalificatie en race) en wielrennen. Tijden in Nederlandse tijd; afleveringen volgens TMDB.</p>`;
+    ${later.length ? laterHtml(later) : ''}
+    <p class="bron">${
+      metSport
+        ? 'Alleen wat jij volgt: nieuwe afleveringen en NPO-uitzendingen van titels op je lijst, en in Sport je clubs en competities, Oranje, Formule 1 (kwalificatie en race) en wielrennen.'
+        : 'Nieuwe afleveringen en NPO-uitzendingen van titels op je lijst, en elke avond tv-tips op de genres en omroepen die je in Instellingen koos. Sport staat uit; die vind je onderin bij Sport.'
+    } Tijden in Nederlandse tijd; afleveringen volgens TMDB.</p>`;
+}
+
+// Tv-tips voor de rest van de week: per avond de twee beste (niet van je lijst; die staan er al).
+function tvTipsVoorWeek(programmas, titels, dagen) {
+  const voorkeur = leesTvVoorkeuren();
+  return dagen
+    .filter((d) => d >= vandaag())
+    .flatMap((dag) =>
+      vanavond(programmas, titels, dag === vandaag() ? new Date() : new Date(`${dag}T05:00:00Z`), voorkeur)
+        .filter((p) => !p.titelOpLijst && !p.herhaling)
+        .slice(0, 2)
+        .map((p) => ({
+          dag, start: p.start, tijd: aftrap(p.start), naam: p.titel, sub: p.aflevering || p.genres.slice(0, 2).join(' · ') || 'Tv-tip', zenders: [], dienst: { naam: p.zender }, nieuw: true, soort: 'npo', tip: true, beeld: p.beeld,
+        }))
+    );
+}
+
+// Na deze week: nieuwe afleveringen en seizoenen van series op je lijst, zo ver als TMDB het weet.
+function laterHtml(later) {
+  return `
+    <section class="weekdag week-later">
+      <div class="weekdag-kop"><h2>Daarna</h2><span class="zacht">series op je lijst</span></div>
+      <ul class="agenda">${later
+        .map((e) => {
+          const poster = veiligeUrl(posterUrl(e.titel.poster, 'w92'));
+          const datum = new Date(`${e.dag}T12:00:00Z`).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+          const wat = e.aflevering === 1 ? `Nieuw seizoen ${e.seizoen}` : `Nieuwe aflevering · ${afleveringKort(e)}`;
+          const dienst = dienstVan(e.titel);
+          return `
+          <li class="agenda-regel">
+            ${poster ? `<img class="agenda-beeld poster" src="${poster}" alt="" loading="lazy" />` : '<span class="agenda-beeld icoon serie">▶</span>'}
+            <div class="agenda-wat">
+              <span class="agenda-tijd">${veilig(datum)}</span>
+              <strong>${veilig(e.titel.titel)}</strong>
+              <span class="zacht">${veilig(wat)}</span>
+            </div>
+            ${dienst ? `<span class="zender-chip mijn">${veilig(dienst.naam)}</span>` : ''}
+          </li>`;
+        })
+        .join('')}</ul>
+    </section>`;
 }
 
 // --- Deze week: eigen scherm, maandag tot en met zondag ---
@@ -889,6 +943,10 @@ async function toonVandaag() {
         ? ''
         : '<section class="welkom"><p class="zacht">Je lijst is nog leeg. Zoek een film of serie om te beginnen.</p><a class="hoofdknop" href="#/films">Zoek een titel</a></section>'
     }
+    <section class="vandaag-blok" id="npo-blok" hidden>
+      <h2 class="vak-kop">Vanavond op de NPO</h2>
+      <div id="npo"></div>
+    </section>
     ${verder.length ? `<section class="vandaag-blok"><h2 class="vak-kop">Verder kijken</h2><div id="verder">${verder.map(verderKaart).join('')}</div></section>` : ''}
     <section class="vandaag-blok" id="afleveringen-blok"${afleveringenNu ? '' : ' hidden'}>
       <h2 class="vak-kop">Nieuwe afleveringen</h2>
@@ -907,10 +965,6 @@ async function toonVandaag() {
              </section>`
           : ''
     }
-    <section class="vandaag-blok" id="npo-blok" hidden>
-      <h2 class="vak-kop">Vanavond op de NPO</h2>
-      <div id="npo"></div>
-    </section>
     ${
       leesSleutel()
         ? `<section class="vandaag-blok" id="nieuw-voor-jou-blok"${eigen.length ? ' hidden' : ''}>
@@ -1015,11 +1069,13 @@ function npoHtml(avond) {
       rest.length
         ? `<ul class="sport-vandaag npo-ook">${rest
             .slice(0, 2)
+            .map((p, i) => ({ p, nr: i + 1 })) // het nummer verwijst naar het programma, ook na sorteren
+            .sort((a, b) => a.p.start.localeCompare(b.p.start))
             .map(
-              (p, i) => `
+              ({ p, nr }) => `
           <li>
             <span class="sport-tijd">${veilig(aftrap(p.start))}</span>
-            <button class="sport-wat afl-link" data-npo="${i + 1}"><strong>${veilig(p.titel)}</strong><span class="zacht">${veilig(p.aflevering || p.genres.slice(0, 2).join(' · '))}</span></button>
+            <button class="sport-wat afl-link" data-npo="${nr}"><strong>${veilig(p.titel)}</strong><span class="zacht">${veilig(p.aflevering || p.genres.slice(0, 2).join(' · '))}</span></button>
             <span class="zender-chip">${veilig(p.zender)}</span>
           </li>`
             )

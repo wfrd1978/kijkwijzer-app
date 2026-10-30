@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { naarAfleveringen } from '../src/tmdb.js';
-import { afleveringenOp, werkAfleveringenBij, leesAfleveringen, afleveringKort } from '../src/afleveringen.js';
+import { afleveringenOp, werkAfleveringenBij, leesAfleveringen, afleveringKort, afleveringenNa } from '../src/afleveringen.js';
 
 const opslag = new Map();
 globalThis.localStorage = { getItem: (k) => opslag.get(k) ?? null, setItem: (k, v) => opslag.set(k, String(v)) };
@@ -47,5 +47,22 @@ describe('afleveringenOp', () => {
     };
     const x = afleveringenOp([borgen, gezien], stand, ['2026-10-26', '2026-10-27', '2026-10-28']);
     expect(x.map((e) => `${e.titel.titel} ${afleveringKort(e)} ${e.dag}`)).toEqual(['Borgen S5 · A2 2026-10-27']);
+  });
+});
+
+describe('afleveringenNa', () => {
+  const a = { tmdbId: 1, soort: 'serie', titel: 'A', status: 'Wil ik zien' };
+  const b = { tmdbId: 2, soort: 'serie', titel: 'B', status: 'Wil ik zien' };
+  const c = { tmdbId: 3, soort: 'serie', titel: 'C', status: 'Gezien' };
+  const stand = {
+    1: { volgende: { dag: '2026-11-20', seizoen: 2, aflevering: 1 } },
+    2: { volgende: { dag: '2026-11-03', seizoen: 1, aflevering: 5 } },
+    3: { volgende: { dag: '2026-11-10', seizoen: 4, aflevering: 1 } },
+  };
+  it('geeft wat na de week komt, op datum, zonder geziene series', () => {
+    expect(afleveringenNa([a, b, c], stand, '2026-11-01').map((e) => e.titel.titel)).toEqual(['B', 'A']);
+  });
+  it('kijkt niet verder dan de grens', () => {
+    expect(afleveringenNa([a, b], stand, '2026-11-01', 10).map((e) => e.titel.titel)).toEqual(['B']);
   });
 });

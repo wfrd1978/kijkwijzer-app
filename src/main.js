@@ -2433,7 +2433,7 @@ async function toonInstellingen() {
 
     <section class="blok" id="backup-blok">
       <h2>Backup</h2>
-      <p>Je lijst staat alleen op deze telefoon. Bewaar regelmatig een backup in je Google Drive: kies in het deelmenu de <b>Drive</b>-app, of <b>Bewaar in Bestanden</b> en dan Google Drive.</p>
+      <p>Je lijst staat alleen op deze telefoon. Tik op Backup maken en kies in het deelmenu <b>Bewaar in Bestanden</b>, met daarna iCloud Drive of Google Drive, of kies de <b>Drive</b>-app. De telefoon onthoudt de map, dus de volgende keer gaat het in twee tikken.</p>
       <p class="zacht" id="backup-status">${backupTekst()}</p>
       <button class="hoofdknop" id="backup-maken"${aantal ? '' : ' disabled'}>Backup maken</button>
       <label class="tweede-knop bestand-knop">Backup terugzetten
@@ -2577,32 +2577,38 @@ async function toonInstellingen() {
     document.querySelectorAll('#weergave .keuze').forEach((k) => k.classList.toggle('actief', k === knop));
   });
 
-  // Eerst klaarmaken, dan bewaren: het deelmenu van de iPhone moet direct na een tik openen.
+  // Het deelmenu van de iPhone opent alleen direct na een tik. Daarom maakt de app de backup
+  // al klaar zodra dit scherm opent; dan is één tik genoeg. Is hij nog niet klaar, dan eerst
+  // klaarmaken en daarna nog een tik.
   const maakKnop = document.getElementById('backup-maken');
   let bestand = null;
+  const klaarmaken = () =>
+    maakBackupBestand().then(
+      (b) => (bestand = b),
+      () => (bestand = null)
+    );
+  if (aantal) klaarmaken();
   maakKnop.addEventListener('click', async () => {
     if (!bestand) {
       maakKnop.disabled = true;
       maakKnop.textContent = 'Backup klaarmaken…';
-      try {
-        bestand = await maakBackupBestand();
-      } catch {
-        bestand = null;
-        maakKnop.disabled = false;
+      await klaarmaken();
+      maakKnop.disabled = false;
+      if (!bestand) {
         maakKnop.textContent = 'Backup maken';
         melding('Backup klaarmaken lukte niet. Probeer het nog eens.');
         return;
       }
-      maakKnop.disabled = false;
       maakKnop.textContent = `Bewaar backup (${aantalTekst(aantal)})`;
       return;
     }
     try {
       if (await bewaarBackup(bestand)) {
-        bestand = null; // volgende keer weer een verse backup
         maakKnop.textContent = 'Backup maken';
         document.getElementById('backup-status').textContent = backupTekst();
         melding('Backup bewaard');
+        bestand = null;
+        klaarmaken(); // een verse voor de volgende keer
       }
     } catch {
       melding('Bewaren lukte niet. Probeer het nog eens.');

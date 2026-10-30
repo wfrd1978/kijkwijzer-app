@@ -24,6 +24,10 @@ Deze app is gestart als kopie van de eigen Kijkwijzer van de eigenaar (oktober 2
 
 Wat ik heb en volg (diensten, voetbal, tv-tips, sportzenders), backup maken en terugzetten, weergave (donker, licht, 's avonds donker, zoals de telefoon), en de TMDB-sleutel. Standaard gebruikt de app de gedeelde sleutel, zodat nieuwe gebruikers meteen kunnen beginnen; wie wil, vult onder 'Liever je eigen sleutel?' een eigen sleutel in (met uitleg in vier stappen). Haal je die weer weg, dan gebruikt de app weer de gedeelde.
 
+## Backup
+
+Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de achtergrond niets naar je cloud sturen, en er is bewust geen eigen server. Daarom maakt de app het backupbestand al klaar zodra je Instellingen opent; één tik op Backup maken opent meteen het deelmenu. Kies Bewaar in Bestanden (iCloud Drive of Google Drive) of de Drive-app; de telefoon onthoudt de map. Na 14 dagen herinnert de app je eraan.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

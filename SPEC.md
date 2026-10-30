@@ -12,7 +12,7 @@ Deze app is gestart als kopie van de eigen Kijkwijzer van de eigenaar (oktober 2
 
 ## Vandaag en Deze week
 
-- **Vandaag**: verder kijken (series met voortgang), nieuwe afleveringen, sport vandaag, Vanavond op de NPO (met voorkeuren voor genres en omroepen), Nieuw voor jou (elke dag een recent verschenen titel bij jouw diensten, in jouw smaak).
+- **Vandaag**: verder kijken (series met voortgang), nieuwe afleveringen, sport vandaag, Vanavond op de NPO (met voorkeuren voor genres en omroepen), Nieuw voor jou (elke dag een recent verschenen titel bij jouw diensten, in jouw smaak). Wie niets met sport heeft, zet in Instellingen bij Weergave 'Sport op Vandaag' uit; op die plek staan dan drie kijktips bij jouw diensten, goed gewaardeerd en in jouw genres, met de waardering in sterren.
 - **Deze week**: maandag tot en met zondag, per dag een kaart met sport, nieuwe afleveringen en wat van je lijst op NPO komt.
 
 ## Sport

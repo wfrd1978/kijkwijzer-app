@@ -23,3 +23,15 @@ describe('kiesVanDag', () => {
     expect(b.keuze.tmdbId).toBe(10);
   });
 });
+
+import { kiesKijktips } from '../src/nieuw.js';
+describe('kiesKijktips', () => {
+  const k = [10, 11, 12, 13, 14].map((id) => ({ tmdbId: id, soort: 'film', titel: `T${id}` }));
+  it('drie tips, niets van je lijst, en elke dag een ander rijtje', () => {
+    const vandaag = kiesKijktips(k, new Set(['film:10']), '2026-10-30');
+    expect(vandaag).toHaveLength(3);
+    expect(vandaag.some((t) => t.tmdbId === 10)).toBe(false);
+    expect(kiesKijktips(k, new Set(), '2026-10-31').map((t) => t.tmdbId)).not.toEqual(kiesKijktips(k, new Set(), '2026-10-30').map((t) => t.tmdbId));
+    expect(kiesKijktips([], new Set(), '2026-10-30')).toEqual([]);
+  });
+});

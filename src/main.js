@@ -3,7 +3,7 @@ import './opslag.js';
 import './style.css';
 import { veilig, veiligeUrl } from './veilig.js';
 import { soortSleutel, leesSleutel, eigenSleutel, heeftGedeeldeSleutel, bewaarSleutel, wisSleutel } from './sleutel.js';
-import { zoekTitels, testSleutel, posterUrl, SleutelFout, haalDiensten, haalAlleDiensten, haalTrending, haalOpDiensten, haalAanbevelingen, haalTrailerEnActeurs, haalActeur, haalAfleveringen, haalGenres, haalNieuwOpDiensten } from './tmdb.js';
+import { zoekTitels, testSleutel, posterUrl, SleutelFout, haalDiensten, haalAlleDiensten, haalTrending, haalOpDiensten, haalAanbevelingen, haalTrailerEnActeurs, haalActeur, haalAfleveringen, haalGenres, haalNieuwOpDiensten, haalTopOpDiensten } from './tmdb.js';
 import { kiesFavorieten, combineerTips } from './tips.js';
 import { haalF1, komendeRaces, nlTijd, F1_ZENDERS, ZENDER_GIDS, SPORTZENDERS, leesSportzenders, zetSportzenders } from './sport.js';
 import { WIELRENNEN, komendeKoersen, kanIkKijken, koersDatum } from './wielrennen.js';
@@ -16,7 +16,7 @@ import { weekDagen, weekTekst } from './vandaag.js';
 import { kanaalVoor } from './espn.js';
 import { haalExtraWedstrijden, alBekend, EXTRA_ZENDERS } from './beker.js';
 import { vanVandaag, ruimOudeDagenOp, dagSleutel } from './dagcache.js';
-import { nieuwVoorJou, GENRE_NAMEN } from './nieuw.js';
+import { nieuwVoorJou, kijktipsVanDag, GENRE_NAMEN } from './nieuw.js';
 import { vanavond, lijstOpNpo, npoLink, TV_GENRES, leesTvVoorkeuren, zetTvVoorkeuren, omroepenIn, metKorteNamen } from './tv.js';
 import { leesAfleveringen, werkAfleveringenBij, afleveringenOp, afleveringKort } from './afleveringen.js';
 import { KEUZES, leesKeuzes, zetKeuze, zetAlleKeuzes, keuzeVan, nieuwBijJou, verdeelDiensten, doorklikLink } from './diensten.js';
@@ -778,6 +778,36 @@ function nieuwVoorJouHtml(t) {
     <p class="bron">Elke dag een andere tip, gekozen op de genres van wat je hoog waardeert en wilt zien.</p>`;
 }
 
+// Sport op Vandaag aan of uit (in Instellingen, bij Weergave). Uit: dan kijktips op die plek.
+const sportOpVandaag = () => onthoud('vandaagSport', 'aan', ['aan', 'uit']) === 'aan';
+
+// De waardering van kijkers (0 tot 10) als vijf sterren, met het cijfer erbij.
+function scoreHtml(score) {
+  if (score == null) return '';
+  const n = Math.round(score / 2);
+  return `<span class="score" aria-label="Waardering ${String(score).replace('.', ',')} van 10"><span class="score-sterren">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span> ${veilig(score.toFixed(1).replace('.', ','))}</span>`;
+}
+
+// Kijktips bij jouw diensten: een kort rijtje, elke tip met poster, genres en waardering.
+function kijktipsHtml(tips) {
+  return `<ul class="kijktips">${tips
+    .map((t, i) => {
+      const poster = veiligeUrl(posterUrl(t.poster, 'w185'));
+      const genres = (t.genreIds ?? []).map((g) => GENRE_NAMEN[g]).filter(Boolean).slice(0, 2);
+      return `
+      <li><button class="kijktip-regel" data-tip="${i}">
+        ${poster ? `<img src="${poster}" alt="" loading="lazy" />` : `<span class="kijktip-leeg" aria-hidden="true">${veilig(t.titel.slice(0, 1))}</span>`}
+        <span class="kijktip-wat">
+          <strong>${veilig(t.titel)}</strong>
+          <span class="zacht">${soortJaar(t)}${genres.length ? ` · ${veilig(genres.join(', '))}` : ''}</span>
+          ${scoreHtml(t.score)}
+        </span>
+      </button></li>`;
+    })
+    .join('')}</ul>
+    <p class="bron">Goed gewaardeerd door kijkers (TMDB), te zien bij jouw diensten en in de genres die jij graag ziet. Elke dag een ander rijtje.</p>`;
+}
+
 async function toonVandaag() {
   const nr = schermNr;
   const titels = await alleTitels();
@@ -809,10 +839,19 @@ async function toonVandaag() {
       <h2 class="vak-kop">Nieuwe afleveringen</h2>
       <div id="afleveringen">${afleveringenNu}</div>
     </section>
-    <section class="vandaag-blok">
-      <h2 class="vak-kop">Sport vandaag</h2>
-      <div id="sport-vandaag"><p class="bezig">Ophalen…</p></div>
-    </section>
+    ${
+      sportOpVandaag()
+        ? `<section class="vandaag-blok">
+             <h2 class="vak-kop">Sport vandaag</h2>
+             <div id="sport-vandaag"><p class="bezig">Ophalen…</p></div>
+           </section>`
+        : leesSleutel() && eigen.length
+          ? `<section class="vandaag-blok" id="kijktips-blok" hidden>
+               <h2 class="vak-kop">Kijktips bij jouw diensten</h2>
+               <div id="kijktips"></div>
+             </section>`
+          : ''
+    }
     <section class="vandaag-blok" id="npo-blok" hidden>
       <h2 class="vak-kop">Vanavond op de NPO</h2>
       <div id="npo"></div>
@@ -850,8 +889,20 @@ async function toonVandaag() {
     document.querySelector('.herinnering').remove();
   });
 
-  const sport = await sportVandaagHtml();
-  if (nr === schermNr) document.getElementById('sport-vandaag').innerHTML = sport;
+  if (sportOpVandaag()) {
+    const sport = await sportVandaagHtml();
+    if (nr === schermNr) document.getElementById('sport-vandaag').innerHTML = sport;
+  } else if (leesSleutel() && eigen.length) {
+    const tips = await kijktipsVanDag({ titels, diensten: eigen, dag: vandaag(), haalGenres, haalTop: haalTopOpDiensten }).catch(() => []);
+    if (nr === schermNr && tips.length) {
+      document.getElementById('kijktips').innerHTML = kijktipsHtml(tips);
+      document.getElementById('kijktips-blok').hidden = false;
+      document.getElementById('kijktips').addEventListener('click', (e) => {
+        const knop = e.target.closest('[data-tip]');
+        if (knop) toonBevestigen(tips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: () => toonVandaag() });
+      });
+    }
+  }
 
   const npo = await haalNpo();
   const avond = npo ? vanavond(npo.programmas, titels, new Date(), leesTvVoorkeuren()) : [];
@@ -2400,6 +2451,12 @@ async function toonInstellingen() {
           .join('')}
       </div>
       <p class="zacht klein">Donker is de basis. Donker 's avonds: van 20:00 tot 7:00 donker, en altijd als je iPhone op donker staat.</p>
+      <h3 class="blok-sub">Sport op Vandaag</h3>
+      <div class="keuzes" id="vandaag-sport">
+        <button class="keuze${sportOpVandaag() ? ' actief' : ''}" data-sport="aan">Aan</button>
+        <button class="keuze${sportOpVandaag() ? '' : ' actief'}" data-sport="uit">Uit</button>
+      </div>
+      <p class="zacht klein">Niet zo van sport? Zet het uit. Dan staan op die plek op Vandaag kijktips van jouw streamingdiensten. Sport blijft onderin te vinden.</p>
     </section>
 
     <section class="blok">
@@ -2503,6 +2560,13 @@ async function toonInstellingen() {
     knop.classList.toggle('actief', aan);
     knop.setAttribute('aria-pressed', String(aan));
     zetSportzenders([...document.querySelectorAll('#sportzenders .actief')].map((k) => k.dataset.zender));
+  });
+
+  document.getElementById('vandaag-sport').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-sport]');
+    if (!knop) return;
+    bewaarKeuze('vandaagSport', knop.dataset.sport);
+    document.querySelectorAll('#vandaag-sport .keuze').forEach((k) => k.classList.toggle('actief', k === knop));
   });
 
   document.getElementById('weergave').addEventListener('click', (e) => {

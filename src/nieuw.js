@@ -48,11 +48,10 @@ export function kiesVanDag(kandidaten, opLijst, dag, stand = { dag: '', keuze: n
 }
 
 // Alles samen, met wat er bewaard wordt: de genres per titel (blijvend) en de keuze van vandaag.
-export async function nieuwVoorJou({ titels, diensten, dag, haalGenres, haalNieuw }) {
-  const stand = lees('nieuwVoorJou', { dag: '', keuze: null, getoond: [] });
+// De genres die jij het vaakst hoog waardeert of wilt zien, per soort. De genres per titel
+// worden één keer opgehaald en bewaard.
+async function smaakGenres(titels, haalGenres) {
   const opLijst = new Set(titels.map(titelSleutel));
-  if (stand.dag === dag && stand.keuze && !opLijst.has(titelSleutel(stand.keuze))) return stand.keuze;
-
   const bekend = lees('genresPerTitel', {});
   const smaak = smaakTitels(titels);
   for (const { t } of smaak.filter((x) => !bekend[titelSleutel(x.t)])) {
@@ -65,16 +64,51 @@ export async function nieuwVoorJou({ titels, diensten, dag, haalGenres, haalNieu
   // Alleen de genres van titels die nog op je lijst staan bewaren.
   for (const k of Object.keys(bekend)) if (!opLijst.has(k)) delete bekend[k];
   zet('genresPerTitel', bekend);
+  const genresVan = (t) => bekend[titelSleutel(t)];
+  return { film: topGenres(smaak, genresVan, 'film'), serie: topGenres(smaak, genresVan, 'serie') };
+}
 
+// Om en om een film en een serie.
+function omEnOm(films, series) {
+  const uit = [];
+  for (let i = 0; i < Math.max(films.length, series.length); i++) uit.push(...[films[i], series[i]].filter(Boolean));
+  return uit;
+}
+
+// Een paar goed gewaardeerde titels voor vandaag: niet op je lijst, en elke dag een ander rijtje.
+export function kiesKijktips(kandidaten, opLijst, dag, aantal = 3) {
+  const vrij = kandidaten.filter((t) => !opLijst.has(titelSleutel(t)));
+  if (!vrij.length) return [];
+  const begin = (Math.floor(Date.parse(`${dag}T12:00:00Z`) / 86400000) * aantal) % vrij.length;
+  return [...vrij.slice(begin), ...vrij.slice(0, begin)].slice(0, aantal);
+}
+
+// Kijktips bij jouw diensten: goed gewaardeerd, in jouw genres. De hele dag dezelfde.
+export async function kijktipsVanDag({ titels, diensten, dag, haalGenres, haalTop, aantal = 3 }) {
+  const opLijst = new Set(titels.map(titelSleutel));
+  const stand = lees('kijktips', { dag: '', tips: [] });
+  const nog = stand.tips.filter((t) => !opLijst.has(titelSleutel(t)));
+  if (stand.dag === dag && nog.length) return nog;
+  const genres = await smaakGenres(titels, haalGenres);
+  const [films, series] = await Promise.all(['film', 'serie'].map((soort) => haalTop(soort, diensten, genres[soort]).catch(() => [])));
+  const tips = kiesKijktips(omEnOm(films, series), opLijst, dag, aantal);
+  if (tips.length) zet('kijktips', { dag, tips });
+  return tips;
+}
+
+export async function nieuwVoorJou({ titels, diensten, dag, haalGenres, haalNieuw }) {
+  const stand = lees('nieuwVoorJou', { dag: '', keuze: null, getoond: [] });
+  const opLijst = new Set(titels.map(titelSleutel));
+  if (stand.dag === dag && stand.keuze && !opLijst.has(titelSleutel(stand.keuze))) return stand.keuze;
+
+  const genres = await smaakGenres(titels, haalGenres);
   const vanaf = new Date(`${dag}T12:00:00Z`);
   vanaf.setUTCDate(vanaf.getUTCDate() - 120);
   const datum = vanaf.toISOString().slice(0, 10);
   const [films, series] = await Promise.all(
-    ['film', 'serie'].map((soort) => haalNieuw(soort, diensten, topGenres(smaak, (t) => bekend[titelSleutel(t)], soort), datum).catch(() => []))
+    ['film', 'serie'].map((soort) => haalNieuw(soort, diensten, genres[soort], datum).catch(() => []))
   );
-  // Om en om een film en een serie.
-  const kandidaten = [];
-  for (let i = 0; i < Math.max(films.length, series.length); i++) kandidaten.push(...[films[i], series[i]].filter(Boolean));
+  const kandidaten = omEnOm(films, series);
   // De dagen wisselen: op even dagen begint het met een serie.
   if (Math.floor(Date.parse(`${dag}T12:00:00Z`) / 86400000) % 2) kandidaten.reverse();
   const nieuw = kiesVanDag(kandidaten, opLijst, dag, stand);

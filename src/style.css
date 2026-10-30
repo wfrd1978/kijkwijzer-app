@@ -716,3 +716,15 @@ span.embleem { display: inline-flex; align-items: center; justify-content: cente
 .stappen ol { margin: 4px 0 12px; padding-left: 20px; }
 .stappen li { margin: 6px 0; line-height: 1.45; }
 .oranje-onder { margin-top: 18px; }
+
+/* Kijktips bij jouw diensten (op Vandaag, als sport uit staat) */
+.kijktips { list-style: none; margin: 0; padding: 0; border-radius: 14px; background: var(--vlak); overflow: hidden; }
+.kijktips li + li { border-top: 1px solid var(--lijn); }
+.kijktip-regel { display: flex; gap: 14px; align-items: center; width: 100%; padding: 12px 14px; border: 0; background: none; color: var(--tekst); text-align: left; font: inherit; cursor: pointer; }
+.kijktip-regel img, .kijktip-leeg { flex: none; width: 54px; height: 80px; border-radius: 6px; object-fit: cover; }
+.kijktip-leeg { display: flex; align-items: center; justify-content: center; background: var(--bg); font-family: var(--kop); font-weight: 800; font-size: 1.4rem; color: var(--zacht); }
+.kijktip-wat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.kijktip-wat strong { font-family: var(--kop); font-weight: 700; font-size: 1.25rem; line-height: 1.1; }
+.kijktip-wat .zacht { font-size: 0.82rem; }
+.score { font-size: 0.85rem; font-weight: 700; }
+.score-sterren { color: var(--ster); letter-spacing: 1px; }

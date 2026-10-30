@@ -268,6 +268,25 @@ export async function haalGenres(soort, tmdbId) {
   return (data.genres ?? []).map((g) => g.id).filter(Number.isInteger);
 }
 
+// Goed gewaardeerde films of series bij jouw diensten (veel stemmen, hoogste waardering eerst),
+// eventueel alleen in de genres die je graag ziet. Met de waardering (0 tot 10) erbij.
+export async function haalTopOpDiensten(soort, ids, genres) {
+  const s = TMDB_SOORT[soort];
+  const data = await vraag(`/discover/${s}`, {
+    ...dienstenParams(ids),
+    sort_by: 'vote_average.desc',
+    'vote_count.gte': s === 'movie' ? 1000 : 300,
+    ...(genres.length ? { with_genres: genres.join('|') } : {}),
+    ...(s === 'tv' ? { without_genres: '10762,10763,10766,10767' } : {}),
+  });
+  return (data.results ?? [])
+    .map((r) => {
+      const t = naarTitel(r, s);
+      return t && { ...t, genreIds: (r.genre_ids ?? []).filter(Number.isInteger), achtergrond: r.backdrop_path ?? '', score: typeof r.vote_average === 'number' ? Math.round(r.vote_average * 10) / 10 : null };
+    })
+    .filter(Boolean);
+}
+
 // Recent verschenen films of series bij jouw diensten, eventueel alleen in de genres die je graag ziet.
 // Nieuws, praatprogramma's, soaps en kinderseries vallen weg.
 export async function haalNieuwOpDiensten(soort, ids, genres, vanaf) {

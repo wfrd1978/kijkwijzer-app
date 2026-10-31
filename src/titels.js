@@ -192,10 +192,6 @@ export function volgendeAflevering(v, seizoenen = []) {
   return volgend ? { seizoen: volgend.nr, aflevering: 1 } : null;
 }
 
-export function alleAfleveringenGezien(v, seizoenen = []) {
-  return Boolean(v && seizoenen.length && !volgendeAflevering(v, seizoenen));
-}
-
 export function voortgangKort(v) {
   return v && v.aflevering > 0 ? `S${v.seizoen} · A${v.aflevering}` : '';
 }

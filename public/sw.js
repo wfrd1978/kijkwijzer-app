@@ -51,6 +51,9 @@ async function netwerkEerst(request) {
   });
   const bewaard = (await cache.match(request)) || (request.mode === 'navigate' ? await cache.match('./') : undefined);
   if (!bewaard) return netwerk;
+  // Alleen het openen van de app valt na 3 seconden terug op de bewaarde pagina. De controle op een
+  // nieuwe versie wacht op internet; anders ziet die op een trage verbinding de nieuwe versie nooit.
+  if (request.mode !== 'navigate') return netwerk.catch(() => bewaard);
   const teLaat = new Promise((klaar) => setTimeout(() => klaar(bewaard), WACHT_OP_NETWERK));
   return Promise.race([netwerk.then((a) => (a.ok ? a : bewaard)).catch(() => bewaard), teLaat]);
 }

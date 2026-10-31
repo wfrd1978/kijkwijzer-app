@@ -1233,15 +1233,17 @@ function toonLijstTab(vak, welke, titels, naWijziging) {
     await titelVerwijderen(id);
     titels.splice(titels.findIndex((t) => t.id === id), 1);
     li.classList.add('weg');
-    setTimeout(teken, 250);
+    // Daarna de lijst én de tellers bijwerken (aantal op de tabbladen en in de kop).
+    setTimeout(() => (naWijziging ? naWijziging() : teken()), 250);
     melding(`"${kopie.titel}" verwijderd`, {
       tekst: 'Ongedaan maken',
       actie: async () => {
         await titelTerugzetten(kopie);
-        // Staat de lijst nog open, dan bijwerken; anders komt hij straks vanzelf.
-        if (!document.getElementById('lijst')) return;
         titels.push(kopie);
-        teken();
+        // Staat Mijn lijst nog open, dan bijwerken (ook als je intussen van tabblad wisselde);
+        // anders komt hij straks vanzelf.
+        if (!vak.isConnected) return;
+        naWijziging ? naWijziging() : teken();
       },
     });
   });
@@ -1292,6 +1294,8 @@ async function toonFilms() {
     for (const k of Object.keys(FILMS_TABS)) {
       document.querySelector(`[data-aantal="${k}"]`).textContent = titels.filter((t) => LIJST_STATUSSEN[k].includes(t.status)).length;
     }
+    const kop = document.querySelector('.schermkop-boven');
+    if (kop) kop.textContent = `${aantalTekst(titels.length)} · films en series`;
     toonLijstTab(vak, filmsTab, titels, naWijziging);
   };
   const tekenVak = () => {
@@ -1440,9 +1444,11 @@ async function toonOntdekken({ terugNaarPlek = false } = {}) {
   };
 
   let stand = ontdekGeladen.get(sleutel);
+  let eersteFout = null;
   // De eerste bladzijde blijft de hele dag bewaard, ook als je de app sluit.
   if (!stand) {
-    const bewaard = await vanVandaag(`ontdek:${sleutel}`, () => laad(1));
+    // Mislukt het ophalen, dan meteen de melding, niet nog een keer 12 seconden wachten.
+    const bewaard = await vanVandaag(`ontdek:${sleutel}`, () => laad(1).catch((f) => { eersteFout = f; throw f; }));
     if (nr !== schermNr) return;
     if (bewaard?.length) {
       stand = { titels: bewaard, pagina: 1 };
@@ -1452,6 +1458,7 @@ async function toonOntdekken({ terugNaarPlek = false } = {}) {
   if (!stand) {
     vak.innerHTML = '<p class="bezig">Ophalen…</p>';
     try {
+      if (eersteFout) throw eersteFout;
       stand = { titels: await laad(1), pagina: 1 };
       ontdekGeladen.set(sleutel, stand);
     } catch (fout) {
@@ -2461,6 +2468,10 @@ function tvStand(soort) {
   return soort === 'genres' ? v.map((k) => TV_GENRES[k].naam).join(', ') : v.join(', ');
 }
 
+function sportStand() {
+  return sportOpVandaag() ? 'Op Vandaag, in Deze week en onderin' : 'Uit: nergens sport, wel extra kijktips';
+}
+
 function competitiesStand() {
   const alles = leesVoetbalKeuzes().alles.map((c) => COMPETITIES[c]?.kort).filter(Boolean);
   return alles.length ? alles.join(', ') : 'Alleen je clubs';
@@ -2544,7 +2555,7 @@ async function toonInstellingen({ welkom = null } = {}) {
       <h2>Sport</h2>
       <div class="kaart">
       <div data-groep="sportvandaag" class="rij">
-        <span><span class="rij-kop">Sport volgen</span><span class="zacht rij-stand">Uit: nergens sport, wel extra kijktips</span></span>
+        <span><span class="rij-kop">Sport volgen</span><span class="zacht rij-stand" id="sport-stand">${sportStand()}</span></span>
         <div class="keuzes schakelaar" id="vandaag-sport">
           <button class="keuze${sportOpVandaag() ? ' actief' : ''}" data-sport="aan">Aan</button>
           <button class="keuze${sportOpVandaag() ? '' : ' actief'}" data-sport="uit">Uit</button>
@@ -2718,6 +2729,7 @@ async function toonInstellingen({ welkom = null } = {}) {
     if (!knop) return;
     bewaarKeuze('vandaagSport', knop.dataset.sport);
     document.querySelectorAll('#vandaag-sport .keuze').forEach((k) => k.classList.toggle('actief', k === knop));
+    document.getElementById('sport-stand').textContent = sportStand();
     document.querySelector('.balk a[data-plek="sport"]')?.toggleAttribute('hidden', !sportOpVandaag());
     if (sportOpVandaag()) werkExtraWedstrijdenBij();
   });
@@ -2735,11 +2747,16 @@ async function toonInstellingen({ welkom = null } = {}) {
   // klaarmaken en daarna nog een tik.
   const maakKnop = document.getElementById('backup-maken');
   let bestand = null;
-  const klaarmaken = () =>
-    maakBackupBestand().then(
-      (b) => (bestand = b),
+  // 'versie' telt de wijzigingen: een bestand dat klaar komt terwijl je al iets anders veranderde,
+  // wordt niet gebruikt.
+  let versie = 0;
+  const klaarmaken = () => {
+    const v = versie;
+    return maakBackupBestand().then(
+      (b) => (bestand = v === versie ? b : null),
       () => (bestand = null)
     );
+  };
   if (aantal) klaarmaken();
   // Verandert er iets in Instellingen (diensten, voetbal, weergave…), dan een verse backup
   // klaarmaken, zodat die keuzes er ook in zitten.
@@ -2747,16 +2764,19 @@ async function toonInstellingen({ welkom = null } = {}) {
   const instellingen = app.querySelector('.instellingen');
   const verversBackup = (e) => {
     if (!aantal || e.target.closest?.('#backup-blok')) return;
+    // Meteen het oude bestand vergeten (tik je nu op Backup maken, dan wordt hij vers gemaakt),
+    // en na een korte pauze een nieuw klaarmaken.
+    versie += 1;
+    bestand = null;
+    if (!maakKnop.disabled) maakKnop.textContent = 'Backup maken';
     clearTimeout(opnieuw);
     opnieuw = setTimeout(() => {
-      if (maakKnop.disabled) return;
-      bestand = null;
-      maakKnop.textContent = 'Backup maken';
-      klaarmaken();
+      if (!maakKnop.disabled && !bestand) klaarmaken();
     }, 300);
   };
   instellingen?.addEventListener('click', verversBackup);
   instellingen?.addEventListener('change', verversBackup);
+  instellingen?.addEventListener('input', verversBackup);
   maakKnop.addEventListener('click', async () => {
     if (!bestand) {
       maakKnop.disabled = true;

@@ -41,6 +41,10 @@ Het adres van de app blijft altijd https://wfrd1978.github.io/kijkwijzer-app/; e
 
 Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de achtergrond niets naar je cloud sturen, en er is bewust geen eigen server. Daarom maakt de app het backupbestand al klaar zodra je Instellingen opent; één tik op Backup maken opent meteen het deelmenu. Kies Bewaar in Bestanden (iCloud Drive of Google Drive) of de Drive-app; de telefoon onthoudt de map. Na 14 dagen herinnert de app je eraan.
 
+## Controles
+
+Controle 31 oktober 2026 (onafhankelijk, vier controleurs): geen hoge of middelgrote risico's in beveiliging en privacy; de gedeelde sleutel komt alleen nog uit een afgeschermd geheim. Gerepareerd: nieuwe afleveringen worden in één ronde tegelijk opgehaald en na elke serie bewaard; de controle op een nieuwe versie wacht op internet (ook op een trage verbinding); Ontdekken toont bij een storing meteen een melding; na vegen en Ongedaan maken kloppen de lijst en de tellers, ook na wisselen van tabblad; een net gewijzigde instelling (ook je naam) zit altijd in de backup (dan eventueel met één tik extra); de tekst bij Sport volgen verandert mee. Opgeruimd: oude CSS (oude weekopmaak, oude dienstenlijst, oude kopjes) en een ongebruikte functie.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

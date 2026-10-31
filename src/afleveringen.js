@@ -27,7 +27,15 @@ export function gevolgdeSeries(titels) {
 }
 
 // Haalt bij wat vandaag nog niet is opgehaald; rustig, één voor één. Geeft de bijgewerkte stand.
-export async function werkAfleveringenBij(titels, dag, haal, { wacht = 250, max = 40 } = {}) {
+// Er loopt altijd maar één ronde tegelijk (Vandaag en Deze week wachten op dezelfde), en na elke
+// serie wordt bewaard: sluit je de app halverwege, dan gaat er niets verloren.
+let lopend = null;
+export function werkAfleveringenBij(titels, dag, haal, opties) {
+  if (!lopend) lopend = ronde(titels, dag, haal, opties).finally(() => (lopend = null));
+  return lopend;
+}
+
+async function ronde(titels, dag, haal, { wacht = 250, max = 40 } = {}) {
   const alles = leesAfleveringen();
   const series = gevolgdeSeries(titels);
   // Wat niet meer op je lijst staat, vergeten.
@@ -42,6 +50,7 @@ export async function werkAfleveringenBij(titels, dag, haal, { wacht = 250, max 
       if (fout?.name !== 'NietGevonden') break;
       alles[t.tmdbId] = { op: dag, laatste: null, volgende: null, seizoenen: [] };
     }
+    bewaar(alles);
     if (wacht) await new Promise((klaar) => setTimeout(klaar, wacht));
   }
   bewaar(alles);

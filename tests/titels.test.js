@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   nieuweTitel, titelSleutel, STATUSSEN, statusWijziging, vandaag, datumTekst, filterTitels, sorteerTitels, dubbelTekst, gevondenActeur,
-  volgendeAflevering, alleAfleveringenGezien, voortgangKort, normaliseerTitel,
+  volgendeAflevering, voortgangKort, normaliseerTitel,
 } from '../src/titels.js';
 
 describe('nieuweTitel', () => {
@@ -127,12 +127,9 @@ describe('voortgang bij series', () => {
   });
   it('weet wanneer je alles hebt gezien', () => {
     expect(volgendeAflevering({ seizoen: 2, aflevering: 2 }, seizoenen)).toBe(null);
-    expect(alleAfleveringenGezien({ seizoen: 2, aflevering: 2 }, seizoenen)).toBe(true);
-    expect(alleAfleveringenGezien({ seizoen: 2, aflevering: 1 }, seizoenen)).toBe(false);
   });
   it('werkt ook zonder bekende seizoenen', () => {
     expect(volgendeAflevering({ seizoen: 4, aflevering: 7 })).toEqual({ seizoen: 4, aflevering: 8 });
-    expect(alleAfleveringenGezien({ seizoen: 4, aflevering: 7 })).toBe(false);
   });
   it('kort genoteerd voor in de lijst', () => {
     expect(voortgangKort({ seizoen: 2, aflevering: 5 })).toBe('S2 · A5');

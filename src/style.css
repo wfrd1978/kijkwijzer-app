@@ -277,10 +277,8 @@ a.titel { text-decoration: none; }
 .uitklap-kop { font-weight: 600; color: var(--accent); }
 .uitklap-stand { font-size: 0.88rem; }
 .uitklap[open] { padding-bottom: 10px; }
-.meer-diensten { margin-top: 12px; }
 .alles-knoppen { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 6px; }
 .alles-knoppen .keuze { font-size: 0.88rem; padding: 7px 12px; }
-.meer-diensten summary { cursor: pointer; color: var(--accent); padding: 8px 0; }
 .bevestig .bijgewerkt { font-size: 0.8rem; margin-top: 4px; text-align: left; }
 .alle-opties { display: inline-block; margin-top: 8px; font-size: 0.92rem; }
 .diensten .bron { margin-top: 8px; }
@@ -311,7 +309,6 @@ a.titel { text-decoration: none; }
 .race-naam { flex: 1; font-weight: 600; }
 .race-dag { color: var(--zacht); font-size: 0.88rem; }
 
-.sport-blok + .sport-blok { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--lijn); }
 .sport-tip { font-size: 0.88rem; margin: -6px 0 16px; }
 .sport-uitleg { font-size: 0.9rem; margin: 0 0 10px; }
 .zender.bij-jou-zender { background: var(--accent-zacht); color: var(--tekst); }
@@ -414,7 +411,6 @@ a.titel { text-decoration: none; }
 .herinnering-knoppen { display: flex; gap: 20px; align-items: center; }
 .herinnering-knoppen a { color: var(--accent); font-weight: 600; text-decoration: none; }
 .herinnering-knoppen .link-knop { padding: 0; color: var(--zacht); }
-.sleutel-kort { font-family: ui-monospace, Menlo, monospace; font-size: 0.85rem; }
 
 /* --- Zwevende balk onderin (gelijk aan de boekenapp) --- */
 
@@ -545,20 +541,8 @@ a.titel { text-decoration: none; }
 .kijktip-tekst span:last-child { font-size: 0.85rem; color: #e2ded6; }
 .vandaag-blok + .nieuw-melding { margin-top: 24px; }
 
-.week { list-style: none; margin: 8px 0 0; padding: 0; }
-.week-dag { display: flex; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--lijn); }
-.week-dag.voorbij { opacity: 0.5; }
-.week-dag.is-vandaag { background: var(--vlak); margin: 0 -16px; padding: 12px 16px; }
-.week-datum { width: 40px; flex: none; display: flex; flex-direction: column; align-items: center; font-family: var(--kop); }
-.week-datum span { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: var(--zacht); }
-.week-datum strong { font-weight: 800; font-size: 1.6rem; line-height: 1; }
-.is-vandaag .week-datum span, .is-vandaag .week-datum strong { color: var(--accent); }
-.week-wat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; justify-content: center; font-size: 0.92rem; }
-.week-regel { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.week-regel .zender-chip { flex: none; }
 
 /* --- Sport met schakelaar --- */
-.sport-blok + .sport-blok { margin-top: 0; padding-top: 0; border-top: 0; }
 #sport-tabs + .sport-tip { margin: 0 0 12px; }
 
 /* --- Instellingen in vier blokken --- */
@@ -566,8 +550,6 @@ a.titel { text-decoration: none; }
 .instellingen.zonder-sleutel .blok:last-child { order: -1; margin-top: 0; padding-top: 0; border-top: 0; } /* eerst de sleutel instellen */
 .instellingen.zonder-sleutel .blok:first-child { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--lijn); }
 #competities-uitklap .keuzes { padding: 4px 0 12px; }
-.blok-sub { margin: 22px 0 6px; font-family: var(--kop); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
-.blok h2 + .blok-sub { margin-top: 8px; }
 
 /* Nieuwe afleveringen */
 .afl-link { color: var(--tekst); text-decoration: none; }
@@ -606,7 +588,6 @@ button.afl-link { border: 0; background: none; padding: 0; text-align: left; fon
 .ster.aan { color: var(--ster); opacity: 1; }
 /* Aantal titels op de tabbladen van Mijn lijst */
 .tab-aantal { font-family: var(--schreefloos); font-size: 0.75rem; font-weight: 700; letter-spacing: 0; opacity: 0.8; }
-.geef-sterren { font-size: 0.8rem; color: var(--ster); opacity: 0.8; }
 
 /* --- Beeld bij sport: kaarten in de stijl van Vanavond op de NPO --- */
 .sportkaart { position: relative; height: 190px; border-radius: 14px; overflow: hidden; margin-bottom: 14px; color: #fff; background: #17191d; }
@@ -790,7 +771,6 @@ p.rij { display: block; }
 .instellingen > .link-knop { align-self: center; padding: 20px 0 4px; font-size: 0.95rem; }
 .knoppen-rij .tweede-knop { width: auto; padding: 9px 16px; }
 #welkom-opnieuw { display: block; margin: 14px auto 0; padding: 8px 0; text-align: center; font-size: 0.95rem; }
-.welkom-groepen .nieuw-uitleg, .welkom-groepen #nieuw-nu, .welkom-groepen #nieuw-uitkomst { display: none; }
 /* Welkomststappen: alleen de hoofdzaken */
 .welkom-groepen #competities-uitklap, .welkom-groepen #tv-omroepen-uitklap { display: none; }
 .welkom-diensten { padding: 14px 0; }

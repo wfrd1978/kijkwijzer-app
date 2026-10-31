@@ -24,6 +24,7 @@ Adres: https://wfrd1978.github.io/kijkwijzer-app/
 | Online zetten | GitHub Pages via GitHub Actions, bij elke push en elke nacht | Gratis; geen server nodig |
 | Voetbalschema | football-data.org, nachtelijks opgehaald door GitHub (`scripts/voetbal.mjs`), sleutel als GitHub-geheim `FOOTBALL_DATA_KEY` | De app mag football-data niet zelf aanroepen |
 | Bekers en Europa League | TheSportsDB, vanuit de app, per club de eerstvolgende wedstrijd | Gratis aanvulling op football-data |
+| Motorsport (MotoGP, DTM, GT World Challenge, WEC) | TheSportsDB (gratis sleutel '123'), nachtelijks opgehaald door GitHub (`scripts/motorsport.mjs`) | Gratis, met tijden per onderdeel van het weekend |
 | ESPN-kanaal Eredivisie, NPO-gids | Nachtelijks opgehaald door GitHub (`scripts/espn.mjs`, `scripts/npo.mjs`) | Openbare pagina's; niet vanuit de app op te halen |
 
 Geen betaalde diensten, geen eigen server en geen sleutels in de code. Let op: de gedeelde TMDB-sleutel staat niet in de code, maar wel in de gebouwde app (dat is bij een app zonder server niet te voorkomen). Gebruik daarom het Read Access Token (alleen lezen), van een TMDB-account zonder persoonsgegevens van de eigenaar. Wordt hij misbruikt of geblokkeerd, dan maakt de eigenaar een nieuw token en vervangt het geheim.

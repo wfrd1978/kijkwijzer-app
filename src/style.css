@@ -779,3 +779,10 @@ p.rij { display: block; }
 .welkom-later-uitleg { margin-top: 4px; text-align: center; }
 .welkom-groepen .uitklap-uitleg { display: none; }
 .week-wissel { margin: 0 0 14px; }
+
+/* Motorsport */
+.motor-serie + .motor-serie { margin-top: 26px; }
+.motor-zender { margin: 12px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.agenda-beeld.icoon.motor { font-size: 1.3rem; }
+#sport-tabs button { font-size: 0.82rem; letter-spacing: 0.04em; }
+.motor-serie .race-ronde { padding-right: 84px; }

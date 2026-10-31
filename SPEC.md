@@ -41,6 +41,10 @@ Het adres van de app blijft altijd https://wfrd1978.github.io/kijkwijzer-app/; e
 
 Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de achtergrond niets naar je cloud sturen, en er is bewust geen eigen server. Daarom maakt de app het backupbestand al klaar zodra je Instellingen opent; één tik op Backup maken opent meteen het deelmenu. Kies Bewaar in Bestanden (iCloud Drive of Google Drive) of de Drive-app; de telefoon onthoudt de map. Na 14 dagen herinnert de app je eraan.
 
+## Motorsport
+
+Naast Formule 1 een tabblad Motorsport (31 oktober 2026). In Instellingen → Sport → Motorsport kies je de raceklassen: MotoGP, DTM (GT3-auto's), GT World Challenge (GT3, Endurance en Sprint, met de 24 uur van Spa) en WEC (langeafstand, met Le Mans). Het tabblad toont per klasse het eerstvolgende weekend met alle onderdelen in Nederlandse tijd, en de rondes daarna. Op Vandaag staan kwalificaties en races, in Deze week alleen races en sprintraces. GitHub haalt de kalenders elke nacht op bij TheSportsDB (scripts/motorsport.mjs → motorsport.json); lukt een klasse niet, dan blijft de vorige versie staan. Zenders onder voorbehoud: MotoGP Ziggo Sport, DTM en GT World Challenge YouTube, WEC HBO Max. Porsche Supercup en Carrera Cup zitten niet in de gratis gegevens. Staat Sport volgen uit, dan ook geen motorsport.
+
 ## Volgende week
 
 Volgende week (31 oktober 2026): bovenaan Deze week twee knoppen, Deze week en Volgende week. Volgende week toont maandag tot en met zondag van de week erna, met dezelfde onderdelen (sport, nieuwe afleveringen, NPO; in de gedeelde app zonder sport de tv-tips, zolang de NPO-gids zo ver vooruit loopt).

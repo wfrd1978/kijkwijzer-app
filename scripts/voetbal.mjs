@@ -108,6 +108,53 @@ async function haalOpenLiga(code, seizoen) {
     }));
 }
 
+// Logo's voor wedstrijden uit OpenLigaDB (die heeft geen bruikbare): op naam opzoeken bij de clubs
+// die TheSportsDB al gaf, in de vorige versie van het schema, of (hooguit 15 per nacht) los opzoeken.
+const STOPWOORDEN = new Set(['fc', 'fk', 'sc', 'ac', 'afc', 'cf', 'club', 'the', 'of', 'de', 'sk', 'nk', 'if', 'aif', 'bk', 'kaa', 'as', 'sv', 'hnk', 'gnk', 'ss', 'calcio', 'football']);
+const woordenVan = (naam) =>
+  (naam ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !STOPWOORDEN.has(w));
+const logos = []; // [{ naam, woorden, logo, bron }]; bron 'ronde' = clubs uit dezelfde competitie
+function onthoudLogo(naam, logo, bron = 'ronde') {
+  if (naam && /^https:\/\//.test(logo ?? '') && !logos.some((x) => x.naam === naam)) logos.push({ naam, woorden: woordenVan(naam), logo, bron });
+}
+// Clubs uit dezelfde competitie: de naam van de een zit helemaal in die van de ander ('Braga' in
+// 'Sporting Braga'); bij twijfel (twee even goede) geen logo. Andere clubs alleen bij precies dezelfde woorden.
+function vindLogo(naam) {
+  const eigen = woordenVan(naam);
+  if (!eigen.length) return '';
+  const zelfde = logos.find((x) => x.woorden.length === eigen.length && x.woorden.every((w) => eigen.includes(w)));
+  if (zelfde) return zelfde.logo;
+  const passend = logos
+    .filter((x) => x.bron === 'ronde' && x.woorden.length)
+    .filter((x) => x.woorden.every((w) => eigen.includes(w)) || eigen.every((w) => x.woorden.includes(w)))
+    .map((x) => ({ x, n: x.woorden.filter((w) => eigen.includes(w)).length }))
+    .sort((a, b) => b.n - a.n);
+  if (!passend.length || (passend[1] && passend[1].n === passend[0].n)) return '';
+  return passend[0].x.logo;
+}
+let zoekTegoed = 15;
+async function zoekLogo(naam) {
+  if (zoekTegoed <= 0) return '';
+  zoekTegoed -= 1;
+  try {
+    const team = ((await haalTsdb(`searchteams.php?t=${encodeURIComponent(naam)}`)).teams ?? []).find((t) => t.strSport === 'Soccer');
+    const logo = team?.strBadge ?? '';
+    onthoudLogo(naam, logo, 'vorig');
+    return logo;
+  } catch {
+    return '';
+  }
+}
+for (const w of (await leesVorige('voetbal'))?.wedstrijden ?? []) for (const p of [w.thuis, w.uit]) onthoudLogo(p?.naam, p?.logo, 'vorig');
+async function vulLogosAan(lijst) {
+  for (const w of lijst) {
+    for (const p of [w.thuis, w.uit]) {
+      if (p.logo || p.naam === 'Nog onbekend') continue;
+      p.logo = vindLogo(p.naam) || (await zoekLogo(p.naam));
+    }
+  }
+}
+
 for (const [code, liga] of Object.entries(UEFA)) {
   try {
     const eerst = (await haalTsdb(`eventsnextleague.php?id=${liga}`)).events?.[0];
@@ -121,6 +168,8 @@ for (const [code, liga] of Object.entries(UEFA)) {
     const hier = [];
     for (const r of [ronde, ronde + 1]) {
       for (const e of (await haalTsdb(`eventsround.php?id=${liga}&r=${r}&s=${encodeURIComponent(eerst.strSeason)}`)).events ?? []) {
+        onthoudLogo(e.strHomeTeam, e.strHomeTeamBadge);
+        onthoudLogo(e.strAwayTeam, e.strAwayTeamBadge);
         if (!e.strTimestamp || gezien.has(e.idEvent)) continue;
         const start = new Date(`${e.strTimestamp.replace(/Z?$/, '')}Z`);
         if (start < van || start > tot) continue;
@@ -142,8 +191,10 @@ for (const [code, liga] of Object.entries(UEFA)) {
     const eerstStart = new Date(`${eerst.strTimestamp?.replace(/Z?$/, '')}Z`);
     if (eerstStart >= van && eerstStart <= tot && !gezien.has(eerst.idEvent)) {
       const reserve = await haalOpenLiga(code, String(eerst.strSeason).slice(0, 4));
+      await vulLogosAan(reserve);
       wedstrijden.push(...reserve);
-      console.log(`${code}: ronde niet compleet bij TheSportsDB; ${reserve.length} wedstrijden (OpenLigaDB)`);
+      const zonder = reserve.flatMap((w) => [w.thuis, w.uit]).filter((p) => !p.logo).length;
+      console.log(`${code}: ronde niet compleet bij TheSportsDB; ${reserve.length} wedstrijden (OpenLigaDB), ${zonder} clubs zonder logo`);
     } else {
       wedstrijden.push(...hier);
       console.log(`${code}: ${hier.length} wedstrijden (TheSportsDB)`);

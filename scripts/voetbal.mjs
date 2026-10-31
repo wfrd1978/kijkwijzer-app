@@ -67,6 +67,94 @@ for (const [i, code] of COMPETITIES.entries()) {
   }
 }
 
+// Europa League en Conference League staan niet in de gratis versie van football-data.
+// TheSportsDB (gratis, zonder eigen sleutel) geeft per speelronde het hele programma:
+// we halen de ronde van de eerstvolgende wedstrijd op, en de ronde daarna.
+const TSDB = 'https://www.thesportsdb.com/api/v1/json/123';
+const UEFA = { EL: 4481, ECL: 5071 };
+const tsdbPloeg = (id, naam, logo) => ({ id: id ? `tsdb-${id}` : null, naam: naam || 'Nog onbekend', vol: naam || '', logo: logo || '' });
+async function haalTsdb(pad) {
+  await wacht(2100); // rustig aan: de gratis versie staat niet veel vragen per minuut toe
+  const antwoord = await fetch(`${TSDB}/${pad}`, { signal: AbortSignal.timeout(30000) });
+  if (!antwoord.ok) throw new Error(`status ${antwoord.status}`);
+  return antwoord.json();
+}
+// Vangnet: OpenLigaDB (gratis, open) heeft beide competities compleet, maar met Duitse clubnamen
+// en zonder bruikbare logo's. Alleen gebruikt als TheSportsDB een ronde niet helemaal geeft
+// (de gratis versie geeft hooguit 50 wedstrijden per ronde, en voorrondes tellen mee).
+const OPENLIGA = { EL: 'uel', ECL: 'uecl' };
+const NAAMFIX = [
+  [/^FC Twente Enschede$/, 'FC Twente'], [/^Ajax Amsterdam$/, 'Ajax'], [/^PSV Eindhoven$/, 'PSV'], [/^Feyenoord Rotterdam$/, 'Feyenoord'], [/^AZ Alkmaar$/, 'AZ'],
+  [/^AC Mailand$/, 'AC Milan'], [/^Inter Mailand$/, 'Inter'], [/^AS Rom$/, 'AS Roma'], [/^Lazio Rom$/, 'Lazio'], [/^SSC Neapel$/, 'Napoli'], [/^AC Florenz$/, 'Fiorentina'],
+  [/^Atalanta Bergamo$/, 'Atalanta'], [/^Roter Stern Belgrad$/, 'Red Star Belgrade'], [/^ZSKA /, 'CSKA '], [/^FC Kopenhagen$/, 'FC Copenhagen'],
+  [/^Sporting Lissabon$/, 'Sporting CP'], [/^Benfica Lissabon$/, 'Benfica'], [/^Celtic Glasgow$/, 'Celtic'], [/^Glasgow Rangers$/, 'Rangers'],
+  [/Belgrad$/, 'Belgrade'], [/Tiflis$/, 'Tbilisi'], [/Bukarest$/, 'Bucharest'], [/Prag$/, 'Prague'], [/Warschau$/, 'Warsaw'], [/Kiew$/, 'Kyiv'], [/ F\.C\.$/, ''],
+];
+const nlNaam = (naam) => NAAMFIX.reduce((n, [patroon, vervang]) => n.replace(patroon, vervang), (naam ?? '').trim()) || 'Nog onbekend';
+async function haalOpenLiga(code, seizoen) {
+  const antwoord = await fetch(`https://api.openligadb.de/getmatchdata/${OPENLIGA[code]}${seizoen}/${seizoen}`, { signal: AbortSignal.timeout(30000) });
+  if (!antwoord.ok) throw new Error(`OpenLigaDB status ${antwoord.status}`);
+  return (await antwoord.json())
+    .filter((m) => m.matchDateTimeUTC && new Date(m.matchDateTimeUTC) >= van && new Date(m.matchDateTimeUTC) <= tot)
+    .map((m) => ({
+      id: `oldb-${m.matchID}`,
+      competitie: code,
+      start: new Date(m.matchDateTimeUTC).toISOString(),
+      status: m.matchIsFinished ? 'FINISHED' : 'TIMED',
+      ronde: m.group?.groupOrderID ?? null,
+      fase: '',
+      thuis: { id: null, naam: nlNaam(m.team1?.teamName), vol: nlNaam(m.team1?.teamName), logo: '' },
+      uit: { id: null, naam: nlNaam(m.team2?.teamName), vol: nlNaam(m.team2?.teamName), logo: '' },
+    }));
+}
+
+for (const [code, liga] of Object.entries(UEFA)) {
+  try {
+    const eerst = (await haalTsdb(`eventsnextleague.php?id=${liga}`)).events?.[0];
+    if (!eerst) {
+      console.log(`${code}: geen wedstrijden gepland`);
+      gelukt += 1;
+      continue;
+    }
+    const ronde = Number(eerst.intRound);
+    const gezien = new Set();
+    const hier = [];
+    for (const r of [ronde, ronde + 1]) {
+      for (const e of (await haalTsdb(`eventsround.php?id=${liga}&r=${r}&s=${encodeURIComponent(eerst.strSeason)}`)).events ?? []) {
+        if (!e.strTimestamp || gezien.has(e.idEvent)) continue;
+        const start = new Date(`${e.strTimestamp.replace(/Z?$/, '')}Z`);
+        if (start < van || start > tot) continue;
+        gezien.add(e.idEvent);
+        hier.push({
+          id: `tsdb-${e.idEvent}`,
+          competitie: code,
+          start: start.toISOString(),
+          status: /finished|FT|AET|PEN/i.test(e.strStatus ?? '') ? 'FINISHED' : 'TIMED',
+          ronde: r,
+          fase: '',
+          thuis: tsdbPloeg(e.idHomeTeam, e.strHomeTeam, e.strHomeTeamBadge),
+          uit: tsdbPloeg(e.idAwayTeam, e.strAwayTeam, e.strAwayTeamBadge),
+        });
+      }
+    }
+    // Zit de eerstvolgende wedstrijd er niet bij terwijl hij binnen het venster valt, dan was de
+    // ronde niet compleet: dan het programma van OpenLigaDB gebruiken.
+    const eerstStart = new Date(`${eerst.strTimestamp?.replace(/Z?$/, '')}Z`);
+    if (eerstStart >= van && eerstStart <= tot && !gezien.has(eerst.idEvent)) {
+      const reserve = await haalOpenLiga(code, String(eerst.strSeason).slice(0, 4));
+      wedstrijden.push(...reserve);
+      console.log(`${code}: ronde niet compleet bij TheSportsDB; ${reserve.length} wedstrijden (OpenLigaDB)`);
+    } else {
+      wedstrijden.push(...hier);
+      console.log(`${code}: ${hier.length} wedstrijden (TheSportsDB)`);
+    }
+    gelukt += 1;
+  } catch (fout) {
+    console.log(`${code}: niet gelukt (${fout.message})`);
+    mislukt.push(code);
+  }
+}
+
 if (!gelukt) {
   console.log('Geen enkele competitie opgehaald: voetbal.json niet opnieuw geschreven.');
   await houdVorige('voetbal');

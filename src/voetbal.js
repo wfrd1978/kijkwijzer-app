@@ -11,7 +11,13 @@ export const COMPETITIES = {
   BL1: { naam: 'Bundesliga', kort: 'Bundesliga', zenders: [{ naam: 'Viaplay', zeker: false }], noot: 'Gaat mogelijk naar Videoland' },
   PD: { naam: 'LaLiga', kort: 'LaLiga', zenders: [{ naam: 'Ziggo Sport', zeker: true }] },
   SA: { naam: 'Serie A', kort: 'Serie A', zenders: [{ naam: 'Ziggo Sport', zeker: true }] },
+  // Deze twee komen van TheSportsDB (football-data heeft ze niet gratis).
+  EL: { naam: 'Europa League', kort: 'EL', zenders: [{ naam: 'Ziggo Sport', zeker: false }] },
+  ECL: { naam: 'Conference League', kort: 'Conference League', zenders: [{ naam: 'Ziggo Sport', zeker: false }] },
 };
+
+// Een losse clubwedstrijd van TheSportsDB in een competitie die we ook helemaal hebben.
+export const COMPETITIE_PER_NAAM = { 'Europa League': 'EL', 'Conference League': 'ECL' };
 
 // --- Je keuzes (op de telefoon, gaan mee in de backup) ---
 // clubs: ids van football-data; alles: competities waarvan je álle wedstrijden wilt zien.

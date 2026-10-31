@@ -41,6 +41,10 @@ Het adres van de app blijft altijd https://wfrd1978.github.io/kijkwijzer-app/; e
 
 Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de achtergrond niets naar je cloud sturen, en er is bewust geen eigen server. Daarom maakt de app het backupbestand al klaar zodra je Instellingen opent; één tik op Backup maken opent meteen het deelmenu. Kies Bewaar in Bestanden (iCloud Drive of Google Drive) of de Drive-app; de telefoon onthoudt de map. Na 14 dagen herinnert de app je eraan.
 
+## Volgende week
+
+Volgende week (31 oktober 2026): bovenaan Deze week twee knoppen, Deze week en Volgende week. Volgende week toont maandag tot en met zondag van de week erna, met dezelfde onderdelen (sport, nieuwe afleveringen, NPO; in de gedeelde app zonder sport de tv-tips, zolang de NPO-gids zo ver vooruit loopt).
+
 ## Europees voetbal
 
 Europa League en Conference League (31 oktober 2026): ook als hele competitie te kiezen (Instellingen → Sport → Hele competities). Football-data heeft ze niet gratis; GitHub haalt ze elke nacht bij TheSportsDB op (de ronde van de eerstvolgende wedstrijd en de ronde daarna) en zet ze in voetbal.json. Geeft TheSportsDB een ronde niet compleet (de gratis versie geeft hooguit 50 wedstrijden per ronde, en voorrondes tellen mee), dan het programma van OpenLigaDB (gratis en open), met Duitse clubnamen omgezet naar de gangbare namen en zonder logo's. Een wedstrijd van een van je clubs staat er één keer in. Zender: Ziggo Sport (onder voorbehoud).

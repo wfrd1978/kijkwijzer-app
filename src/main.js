@@ -762,9 +762,18 @@ function agendaRegel(x, mijn) {
     </li>`;
 }
 
+// Deze week of volgende week (de knoppen bovenaan Deze week).
+let welkeWeek = 'deze';
+function gekozenWeekDag() {
+  if (welkeWeek === 'deze') return vandaag();
+  const d = new Date(`${vandaag()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 7);
+  return d.toISOString().slice(0, 10);
+}
+
 async function weekHtml(titels, stand) {
   const mijn = leesSportzenders();
-  const dagen = weekDagen(vandaag());
+  const dagen = weekDagen(gekozenWeekDag());
   // In het weekoverzicht bij de Formule 1 alleen wat telt: kwalificatie, sprint en race.
   const metSport = sportOpVandaag();
   const programmas = (await haalNpo())?.programmas ?? [];
@@ -858,7 +867,18 @@ async function toonWeek() {
   const nr = schermNr;
   const titels = await alleTitels();
   if (nr !== schermNr) return;
-  app.innerHTML = `${schermKop('Deze week', weekTekst(weekDagen(vandaag())))}<div id="week"><p class="bezig">Ophalen…</p></div>`;
+  app.innerHTML = `${schermKop(welkeWeek === 'deze' ? 'Deze week' : 'Volgende week', weekTekst(weekDagen(gekozenWeekDag())))}
+    <div class="keuzes week-keuze week-wissel" id="week-wissel">
+      <button class="keuze${welkeWeek === 'deze' ? ' actief' : ''}" data-week="deze">Deze week</button>
+      <button class="keuze${welkeWeek === 'volgende' ? ' actief' : ''}" data-week="volgende">Volgende week</button>
+    </div>
+    <div id="week"><p class="bezig">Ophalen…</p></div>`;
+  document.getElementById('week-wissel').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-week]');
+    if (!knop || knop.dataset.week === welkeWeek) return;
+    welkeWeek = knop.dataset.week;
+    toonWeek();
+  });
   const html = await weekHtml(titels, leesAfleveringen());
   if (nr !== schermNr) return;
   document.getElementById('week').innerHTML = html;

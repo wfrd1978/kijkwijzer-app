@@ -55,7 +55,7 @@ jobs:
         continue-on-error: true
       # Kalenders van MotoGP, DTM, GT World Challenge en WEC (TheSportsDB, zonder eigen sleutel).
       - name: Motorsport ophalen
-        timeout-minutes: 8
+        timeout-minutes: 12
         run: node scripts/motorsport.mjs
         continue-on-error: true
       # Vangnet: liep een ophaalstap vast, dan de vorige versie van dat schema meenemen.

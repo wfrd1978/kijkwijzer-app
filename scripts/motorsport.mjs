@@ -10,13 +10,13 @@ const MAX_RONDES = 6; // de eerstvolgende ronde en de vijf daarna
 
 const wacht = (ms) => new Promise((klaar) => setTimeout(klaar, ms));
 async function haal(pad, poging = 1) {
-  await wacht(2100); // rustig aan: de gratis versie staat niet veel vragen per minuut toe
+  await wacht(3500); // rustig aan: de gratis versie staat niet veel vragen per minuut toe (ook het voetbalscript vraagt er net voor)
   const antwoord = await fetch(`${TSDB}/${pad}`, { signal: AbortSignal.timeout(30000) });
-  // Te veel vragen: één minuut wachten en het nog één keer proberen.
-  if (antwoord.status === 429 && poging === 1) {
+  // Te veel vragen: een minuut wachten en het opnieuw proberen (hooguit twee keer).
+  if (antwoord.status === 429 && poging <= 2) {
     console.log('Te veel vragen, over een minuut opnieuw.');
-    await wacht(61000);
-    return haal(pad, 2);
+    await wacht(65000);
+    return haal(pad, poging + 1);
   }
   if (!antwoord.ok) throw new Error(`status ${antwoord.status}`);
   return antwoord.json();

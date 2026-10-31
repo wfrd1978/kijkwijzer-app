@@ -1783,7 +1783,7 @@ function haalKlaargezet(naam) {
   return vanVandaag(naam, async () => {
     const antwoord = await fetch(`${import.meta.env.BASE_URL}${naam}.json`, { cache: 'no-cache' });
     return antwoord.ok ? antwoord.json() : null;
-  });
+  }, new Date(), { versie: HUIDIG_SCRIPT ?? '' });
 }
 
 // Het schema van football-data, aangevuld met andere wedstrijden van je clubs (beker, Europa League).

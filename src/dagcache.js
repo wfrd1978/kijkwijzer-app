@@ -39,13 +39,15 @@ export function ruimOudeDagenOp(nu = new Date()) {
 }
 
 // 'haal' geeft de gegevens (of null als er niets is). Null wordt niet bewaard.
-export async function vanVandaag(sleutel, haal, nu = new Date()) {
+// Met 'versie' (de versie van de app) telt iets ook als oud zodra er een nieuwe versie is: die
+// komt vaak met nieuwe gegevens, zoals een extra competitie in het voetbalschema.
+export async function vanVandaag(sleutel, haal, nu = new Date(), { versie = '' } = {}) {
   const dag = dagSleutel(nu);
   const bewaard = lees(sleutel);
-  if (bewaard?.dag === dag) return bewaard.data;
+  if (bewaard?.dag === dag && (bewaard.versie ?? '') === versie) return bewaard.data;
   try {
     const data = await haal();
-    if (data != null) bewaar(sleutel, { dag, data });
+    if (data != null) bewaar(sleutel, versie ? { dag, versie, data } : { dag, data });
     return data ?? bewaard?.data ?? null;
   } catch {
     return bewaard?.data ?? null;

@@ -974,6 +974,7 @@ async function toonVandaag() {
   const afleveringenNu = afleveringenHtml(titels, leesAfleveringen());
   app.innerHTML = `
     ${kop}
+    ${browserHtml()}
     ${titels.length && moetHerinneren(titels.length) ? herinneringHtml() : ''}
     ${
       titels.length
@@ -3099,7 +3100,76 @@ function welkomTeller(id) {
     <div class="welkom-voortgang"><span style="width:${Math.round(((i + 1) / stappen.length) * 100)}%"></span></div>`;
 }
 
+// Draait de app vanaf het beginscherm, of in de browser? (Zoals in de deelbare boekenapp.)
+function opBeginscherm() {
+  return window.navigator.standalone === true || window.matchMedia?.('(display-mode: standalone)').matches;
+}
+const opTelefoon = () => /iPhone|iPad|iPod|Android/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+// In de browser eerst uitleggen hoe je de app op je beginscherm zet: de browser en de app op het
+// beginscherm bewaren elk hun eigen gegevens, dus begin je liefst meteen in de app zelf.
+let installatieOverslaan = false;
+function toonInstalleren() {
+  const iphone = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const deelIcoon =
+    '<svg class="deel-icoon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l4 4-1.4 1.4L13 6.8V15h-2V6.8L9.4 8.4 8 7z" /><path d="M5 10h4v2H7v8h10v-8h-2v-2h4v12H5z" /></svg>';
+  const UITLEG = {
+    ios: {
+      stappen: [`Tik onderin Safari op de deelknop ${deelIcoon}`, 'Scrol een stukje omlaag en kies <b>Zet op beginscherm</b>', 'Tik op <b>Voeg toe</b> en open Kijkwijzer vanaf je beginscherm'],
+      noot: 'Gebruik Safari: in andere browsers op de iPhone ontbreekt deze keuze soms.',
+    },
+    android: {
+      stappen: ['Tik in Chrome rechtsboven op het menu <b>⋮</b>', 'Kies <b>Toevoegen aan startscherm</b> of <b>App installeren</b>', 'Tik op <b>Installeren</b> en open Kijkwijzer vanaf je startscherm'],
+      noot: 'Gebruik je Samsung Internet? Tik dan onderin op het menu en kies <b>Pagina toevoegen aan</b> en dan <b>Startscherm</b>.',
+    },
+  };
+  let systeem = iphone ? 'ios' : 'android';
+  app.innerHTML = `
+    <section class="welkom-stap">
+      <p class="welkom-teller">Eerst even dit</p>
+      <h1>Zet Kijkwijzer op je beginscherm</h1>
+      <p>Dan werkt Kijkwijzer als een gewone app: met één tik open, ook zonder internet.</p>
+      <p class="label">Wat voor telefoon heb je?</p>
+      <div class="keuzes" id="w-systeem">
+        <button class="keuze" data-systeem="ios">iPhone of iPad</button>
+        <button class="keuze" data-systeem="android">Android</button>
+      </div>
+      <div id="w-uitleg"></div>
+      <p class="zacht">Begin daarna in de app op je beginscherm. Wat je hier in de browser invult, zie je daar niet terug.</p>
+      <button class="link-knop" id="w-browser">Toch verder in de browser</button>
+    </section>`;
+  const toon = () => {
+    const u = UITLEG[systeem];
+    document.querySelectorAll('#w-systeem .keuze').forEach((k) => k.classList.toggle('actief', k.dataset.systeem === systeem));
+    document.getElementById('w-uitleg').innerHTML = `<ol class="installatie">${u.stappen.map((x) => `<li>${x}</li>`).join('')}</ol><p class="zacht klein">${u.noot}</p>`;
+  };
+  toon();
+  document.getElementById('w-systeem').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-systeem]');
+    if (!knop) return;
+    systeem = knop.dataset.systeem;
+    toon();
+  });
+  document.getElementById('w-browser').addEventListener('click', () => {
+    installatieOverslaan = true;
+    // Al eerder begonnen (via 'Hoe dan?' op Vandaag): terug naar Vandaag; anders de welkomststappen.
+    if (welkomGedaan()) location.hash = '#/';
+    else toonWelkom('naam');
+  });
+}
+
+// Wie toch in de browser blijft: een kleine herinnering op Vandaag (alleen op een telefoon).
+function browserHtml() {
+  if (opBeginscherm() || !opTelefoon()) return '';
+  return `
+    <div class="herinnering browser-herinnering">
+      <p><strong>Je gebruikt Kijkwijzer nu in de browser.</strong> De browser en de app op je beginscherm bewaren elk hun eigen lijst. Zet Kijkwijzer op je beginscherm en open hem daarvandaan.</p>
+      <div class="herinnering-knoppen"><a href="#/welkom/installeren">Hoe dan?</a></div>
+    </div>`;
+}
+
 function toonWelkom(id) {
+  if (id === 'installeren' || (id === 'naam' && !installatieOverslaan && !opBeginscherm())) return toonInstalleren();
   const stap = WELKOM_STAPPEN.find((st) => st.id === id) ?? WELKOM_STAPPEN[0];
   if (stap.groepen) {
     toonInstellingen({ welkom: stap });

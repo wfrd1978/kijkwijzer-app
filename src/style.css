@@ -786,3 +786,10 @@ p.rij { display: block; }
 .agenda-beeld.icoon.motor { font-size: 1.3rem; }
 #sport-tabs button { font-size: 0.82rem; letter-spacing: 0.04em; }
 .motor-serie .race-ronde { padding-right: 84px; }
+
+/* Op je beginscherm zetten (zoals in de deelbare boekenapp) */
+.installatie { margin: 20px 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 14px; line-height: 1.5; }
+.installatie li::marker { color: var(--accent); font-weight: 700; }
+.deel-icoon { width: 22px; height: 22px; fill: var(--accent); vertical-align: -5px; margin-left: 2px; }
+#w-systeem { margin: 8px 0 4px; }
+.welkom-stap #w-browser { display: block; margin: 8px auto 0; }

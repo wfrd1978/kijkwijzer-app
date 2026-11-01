@@ -43,7 +43,7 @@ Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de
 
 ## Op je beginscherm zetten
 
-Opent iemand de app in de browser (niet vanaf het beginscherm), dan komt vóór de welkomststappen eerst 'Zet Kijkwijzer op je beginscherm': kies iPhone/iPad of Android en volg drie korte stappen (zoals in de deelbare boekenapp). De browser en de app op het beginscherm bewaren elk hun eigen lijst; daarom begin je liefst meteen in de app. 'Toch verder in de browser' kan altijd. Wie op een telefoon in de browser blijft, ziet op Vandaag een kleine herinnering met 'Hoe dan?'.
+Opent iemand de app in de browser (niet vanaf het beginscherm), dan komt vóór de welkomststappen eerst 'Zet Kijkwijzer op je beginscherm': kies iPhone/iPad of Android en volg drie korte stappen (zoals in de deelbare boekenapp). De browser en de app op het beginscherm bewaren elk hun eigen lijst; daarom begin je liefst meteen in de app. 'Toch verder in de browser' kan altijd; erboven staat wat dat betekent: de lijst staat dan alleen in die browser, je ziet hem niet terug in de app op je beginscherm, Safari wist hem als je de site ongeveer een week niet opent, en in een privévenster is alles weg zodra je het sluit. Wie op een telefoon in de browser blijft, ziet op Vandaag een kleine herinnering met 'Hoe dan?'.
 
 ## Motorsport
 

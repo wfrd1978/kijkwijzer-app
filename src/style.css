@@ -793,3 +793,6 @@ p.rij { display: block; }
 .deel-icoon { width: 22px; height: 22px; fill: var(--accent); vertical-align: -5px; margin-left: 2px; }
 #w-systeem { margin: 8px 0 4px; }
 .welkom-stap #w-browser { display: block; margin: 8px auto 0; }
+.browser-gevolg { margin-top: 18px; text-align: left; }
+.browser-gevolg p { margin: 0 0 6px; }
+.browser-gevolg ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }

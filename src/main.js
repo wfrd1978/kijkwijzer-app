@@ -3135,7 +3135,15 @@ function toonInstalleren() {
         <button class="keuze" data-systeem="android">Android</button>
       </div>
       <div id="w-uitleg"></div>
-      <p class="zacht">Begin daarna in de app op je beginscherm. Wat je hier in de browser invult, zie je daar niet terug.</p>
+      <p class="zacht">Begin daarna in de app op je beginscherm.</p>
+      <div class="waarschuwing browser-gevolg">
+        <p><strong>Ga je toch verder in de browser?</strong> Dan bewaart Kijkwijzer je lijst alleen in deze browser:</p>
+        <ul>
+          <li>je ziet hem niet terug in de app op je beginscherm;</li>
+          <li>Safari wist hem vanzelf als je de site ongeveer een week niet opent;</li>
+          <li>in een privévenster is alles weg zodra je het sluit.</li>
+        </ul>
+      </div>
       <button class="link-knop" id="w-browser">Toch verder in de browser</button>
     </section>`;
   const toon = () => {

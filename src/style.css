@@ -796,3 +796,10 @@ p.rij { display: block; }
 .browser-gevolg { margin-top: 18px; text-align: left; }
 .browser-gevolg p { margin: 0 0 6px; }
 .browser-gevolg ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; }
+
+/* Live standen */
+.live-stand { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0; font-family: var(--kop); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.02em; color: var(--tekst); }
+.live-label { padding: 1px 7px; border-radius: 6px; background: var(--rood); color: #fff; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; animation: live-puls 2s ease-in-out infinite; }
+@keyframes live-puls { 50% { opacity: 0.6; } }
+.live-stand:not(.is-live) { color: var(--zacht); font-size: 0.95rem; }
+.kijktip-tekst .live-stand { color: #fff; }

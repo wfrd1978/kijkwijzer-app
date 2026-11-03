@@ -17,6 +17,7 @@ import { SERIES, leesMotorKeuzes, zetMotorKeuzes, komendeMotorraces, isTraining 
 import { kanaalVoor } from './espn.js';
 import { haalExtraWedstrijden, alBekend, EXTRA_ZENDERS } from './beker.js';
 import { vanVandaag, ruimOudeDagenOp, dagSleutel } from './dagcache.js';
+import { bronVoor, inLiveVenster, vanVandaagNog, uitOpenLigaDB, uitEspn, vindStand, standTekst } from './live.js';
 import { nieuwVoorJou, kijktipsVanDag, GENRE_NAMEN } from './nieuw.js';
 import { vanavond, lijstOpNpo, npoLink, TV_GENRES, leesTvVoorkeuren, zetTvVoorkeuren, omroepenIn, metKorteNamen } from './tv.js';
 import { leesAfleveringen, werkAfleveringenBij, afleveringenOp, afleveringenNa, afleveringKort } from './afleveringen.js';
@@ -663,7 +664,7 @@ async function sportItems(dagen) {
   if (schema) {
     for (const w of mijnWedstrijden(schema.wedstrijden, leesVoetbalKeuzes()).filter((x) => op.has(nlDagVan(x)))) {
       const c = competitieVan(w);
-      items.push({ dag: nlDagVan(w), start: w.start, tijd: aftrap(w.start), naam: `${w.thuis.naam} – ${w.uit.naam}`, sub: c.naam, zenders: zendersVan(w, kanalen), soort: 'voetbal', thuis: w.thuis, uit: w.uit, mijnClub: [w.thuis.id, w.uit.id].some((id) => leesVoetbalKeuzes().clubs.includes(id)) });
+      items.push({ w, dag: nlDagVan(w), start: w.start, tijd: aftrap(w.start), naam: `${w.thuis.naam} – ${w.uit.naam}`, sub: c.naam, zenders: zendersVan(w, kanalen), soort: 'voetbal', thuis: w.thuis, uit: w.uit, mijnClub: [w.thuis.id, w.uit.id].some((id) => leesVoetbalKeuzes().clubs.includes(id)) });
     }
   }
   if (oranje && op.has(nlDagVan(oranje))) {
@@ -711,7 +712,7 @@ async function sportVandaagHtml() {
       return `
       <li>
         <span class="sport-tijd${x.tijd ? '' : ' dag'}">${x.tijd ? veilig(x.tijd) : 'Hele dag'}</span>
-        <div class="sport-wat"><strong>${veilig(x.naam)}</strong><span class="zacht">${veilig(x.sub)}</span></div>
+        <div class="sport-wat"><strong>${veilig(x.naam)}</strong>${x.w ? liveVak(x.w) : ''}<span class="zacht">${veilig(x.sub)}</span></div>
         ${z ? zenderChip(z, mijn, true) : ''}
       </li>`;
     })
@@ -767,6 +768,7 @@ function agendaRegel(x, mijn) {
       <div class="agenda-wat">
         <span class="agenda-tijd">${x.tijd ? veilig(x.tijd) : x.nieuw ? '<span class="nieuw-woord">Nieuw</span>' : 'Hele dag'}</span>
         <strong>${veilig(x.naam)}</strong>
+        ${x.w ? liveVak(x.w) : ''}
         <span class="zacht">${veilig(x.sub)}</span>
       </div>
       ${rechts}
@@ -1702,6 +1704,79 @@ function embleem(p, klasse = 'embleem') {
 }
 
 // Grote kaart voor één wedstrijd, in de stijl van Vanavond op de NPO: beide emblemen groot in beeld.
+// --- Live standen (aan/uit in Instellingen bij Sport) ---
+const liveAan = () => onthoud('liveStanden', 'aan', ['aan', 'uit']) === 'aan';
+const liveWedstrijden = new Map(); // id → wedstrijd, voor de plekken die nu op het scherm staan
+
+// Een (nog lege) plek voor de stand; de stand zelf vult werkLiveBij() in.
+function liveVak(w) {
+  if (!liveAan() || !bronVoor(w) || !vanVandaagNog(w)) return '';
+  liveWedstrijden.set(String(w.id), w);
+  return `<span class="live-stand" data-live="${veilig(w.id)}" hidden></span>`;
+}
+
+const liveCache = new Map(); // bron|liga|dag → { op, standen }
+// 'vers': er is een wedstrijd bezig, dan hooguit 50 seconden oud; anders is wat er is goed genoeg.
+async function haalStanden({ bron, liga }, dag, vers) {
+  const sleutel = `${bron}|${liga}|${dag}`;
+  const bewaard = liveCache.get(sleutel);
+  if (bewaard && (!vers || Date.now() - bewaard.op < 50000)) return bewaard.standen;
+  const adres = bron === 'oldb' ? `https://api.openligadb.de/getmatchdata/${liga}` : `https://site.api.espn.com/apis/site/v2/sports/soccer/${liga}/scoreboard?dates=${dag.replaceAll('-', '')}`;
+  const antwoord = await fetch(adres);
+  if (!antwoord.ok) throw new Error(`status ${antwoord.status}`);
+  const data = await antwoord.json();
+  const standen = bron === 'oldb' ? uitOpenLigaDB(data) : uitEspn(data);
+  liveCache.set(sleutel, { op: Date.now(), standen });
+  return standen;
+}
+
+// Vult de standen in bij de wedstrijden die nu op het scherm staan. Vraagt alleen iets op als een
+// wedstrijd bezig is (of net klaar), en per competitie maar één keer.
+let liveBezig = false;
+async function werkLiveBij() {
+  if (liveBezig || !liveAan() || document.visibilityState !== 'visible') return;
+  const plekken = [...document.querySelectorAll('[data-live]')];
+  const wedstrijden = [...new Set(plekken.map((p) => liveWedstrijden.get(p.dataset.live)).filter(Boolean))];
+  if (!wedstrijden.some((w) => vanVandaagNog(w))) return;
+  liveBezig = true;
+  try {
+    const groepen = new Map();
+    for (const w of wedstrijden.filter((x) => vanVandaagNog(x))) {
+      const b = bronVoor(w);
+      const sleutel = `${b.bron}|${b.liga}|${w.start.slice(0, 10)}`;
+      if (!groepen.has(sleutel)) groepen.set(sleutel, { b, dag: w.start.slice(0, 10), wedstrijden: [] });
+      groepen.get(sleutel).wedstrijden.push(w);
+    }
+    for (const g of groepen.values()) {
+      let standen;
+      try {
+        standen = await haalStanden(g.b, g.dag, g.wedstrijden.some((w) => inLiveVenster(w)));
+      } catch {
+        continue; // deze bron lukt nu niet: dan geen stand, de rest gewoon wel
+      }
+      for (const w of g.wedstrijden) {
+        const t = standTekst(vindStand(w, standen));
+        for (const p of document.querySelectorAll(`[data-live="${CSS.escape(String(w.id))}"]`)) {
+          p.hidden = !t;
+          if (!t) continue;
+          p.classList.toggle('is-live', t.live);
+          p.innerHTML = t.live ? `<span class="live-label">Live</span> ${veilig(t.tekst)}` : `Eindstand ${veilig(t.tekst)}`;
+        }
+      }
+    }
+  } finally {
+    liveBezig = false;
+  }
+}
+// Na elk nieuw scherm, elke minuut zolang de app in beeld is, en als hij terug in beeld komt.
+let liveTimer;
+new MutationObserver(() => {
+  clearTimeout(liveTimer);
+  liveTimer = setTimeout(werkLiveBij, 400);
+}).observe(document.getElementById('app'), { childList: true, subtree: true });
+setInterval(werkLiveBij, 60000);
+document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && werkLiveBij());
+
 function wedstrijdKaart(w, zenders, mijn, label) {
   const z = eenZender(zenders, mijn);
   const wanneer = [dagNaam(nlDagVan(w), vandaag()), aftrap(w.start), z ? z.kanaal || z.naam : ''].filter(Boolean).join(' · ');
@@ -1711,6 +1786,7 @@ function wedstrijdKaart(w, zenders, mijn, label) {
       <div class="kijktip-tekst">
         <span class="kijktip-label">${veilig(label)}</span>
         <strong>${veilig(w.thuis.naam)} – ${veilig(w.uit.naam)}</strong>
+        ${liveVak(w)}
         <span>${veilig(wanneer)}</span>
       </div>
     </div>`;
@@ -1965,6 +2041,7 @@ async function toonVoetbal(nr, mijn) {
         <span class="aftrap">${veilig(aftrap(w.start))}</span>
         <div class="wedstrijd-tekst">
           <strong class="met-emblemen">${embleem(w.thuis)}<span class="${mijnClub(w.thuis) ? 'mijn-club' : ''}">${veilig(w.thuis.naam)}</span> – ${embleem(w.uit)}<span class="${mijnClub(w.uit) ? 'mijn-club' : ''}">${veilig(w.uit.naam)}</span></strong>
+          ${liveVak(w)}
           <span class="zacht">${veilig(c.naam)}</span>
           <div class="koers-zenders">${zenderChips(zenders, mijn)}</div>
           ${kijkTekst(zenders, mijn)}
@@ -2666,6 +2743,13 @@ async function toonInstellingen({ welkom = null } = {}) {
           <button class="keuze${sportOpVandaag() ? '' : ' actief'}" data-sport="uit">Uit</button>
         </div>
       </div>
+      <div data-groep="live" class="rij">
+        <span><span class="rij-kop">Live standen</span><span class="zacht rij-stand">Tijdens een wedstrijd elke minuut de stand (niet bij Eredivisie, Serie A en KNVB-beker)</span></span>
+        <div class="keuzes schakelaar" id="live-standen">
+          <button class="keuze${liveAan() ? ' actief' : ''}" data-live-keuze="aan">Aan</button>
+          <button class="keuze${liveAan() ? '' : ' actief'}" data-live-keuze="uit">Uit</button>
+        </div>
+      </div>
       <div data-groep="sportzenders">
       <details class="uitklap" id="sportzenders-uitklap">
         <summary><span class="uitklap-kop">Sportzenders</span><span class="zacht uitklap-stand" id="sportzenders-stand">${veilig(leesSportzenders().join(', ') || 'Nog niets gekozen')}</span></summary>
@@ -2850,6 +2934,13 @@ async function toonInstellingen({ welkom = null } = {}) {
     knop.setAttribute('aria-pressed', String(aan));
     zetSportzenders([...document.querySelectorAll('#sportzenders .actief')].map((k) => k.dataset.zender));
     document.getElementById('sportzenders-stand').textContent = leesSportzenders().join(', ') || 'Nog niets gekozen';
+  });
+
+  document.getElementById('live-standen').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-live-keuze]');
+    if (!knop) return;
+    bewaarKeuze('liveStanden', knop.dataset.liveKeuze);
+    document.querySelectorAll('#live-standen .keuze').forEach((k) => k.classList.toggle('actief', k === knop));
   });
 
   document.getElementById('vandaag-sport').addEventListener('click', (e) => {

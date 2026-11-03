@@ -37,9 +37,16 @@ export function uitOpenLigaDB(wedstrijden) {
   return (wedstrijden ?? []).map((m) => {
     const laatste = (m.goals ?? []).at(-1);
     const uitslag = [...(m.matchResults ?? [])].sort((a, b) => (a.resultOrderID ?? 0) - (b.resultOrderID ?? 0)).at(-1);
-    const begonnen = Date.now() >= new Date(m.matchDateTimeUTC).getTime();
-    const doelThuis = laatste?.scoreTeam1 ?? uitslag?.pointsTeam1 ?? (begonnen ? 0 : null);
-    const doelUit = laatste?.scoreTeam2 ?? uitslag?.pointsTeam2 ?? (begonnen ? 0 : null);
+    const aftrap = new Date(m.matchDateTimeUTC).getTime();
+    const begonnen = Date.now() >= aftrap;
+    // OpenLigaDB wordt door vrijwilligers bijgehouden; niet elke wedstrijd. Alleen 0-0 tonen als er sinds
+    // de aftrap echt iets is bijgewerkt (de tijd daarvan is plaatselijke tijd; het verschil met UTC staat
+    // in de wedstrijd zelf). Anders geen stand: liever niets dan een verkeerde stand.
+    const verschil = new Date(`${m.matchDateTime}Z`).getTime() - aftrap;
+    const bijgewerkt = m.lastUpdateDateTime ? new Date(`${m.lastUpdateDateTime}Z`).getTime() - (Number.isFinite(verschil) ? verschil : 0) : 0;
+    const nul = begonnen && bijgewerkt >= aftrap ? 0 : null;
+    const doelThuis = laatste?.scoreTeam1 ?? uitslag?.pointsTeam1 ?? nul;
+    const doelUit = laatste?.scoreTeam2 ?? uitslag?.pointsTeam2 ?? nul;
     return {
       start: m.matchDateTimeUTC,
       thuis: m.team1?.teamName ?? '',

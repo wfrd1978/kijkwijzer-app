@@ -43,7 +43,7 @@ Automatisch bewaren in iCloud of Google Drive kan een webapp niet: hij mag op de
 
 ## Live standen
 
-Speelt een wedstrijd die je volgt en heb je de app open, dan vraagt hij elke minuut de stand op en toont hij op Vandaag, in Sport en in Deze week een rood LIVE-label met stand en minuut; na afloop 'Eindstand'. Daarbuiten vraagt hij niets. Aan of uit in Instellingen → Sport → Live standen (standaard aan, gaat mee in de backup). Bron: OpenLigaDB (gratis en open) voor Bundesliga, Champions League, Premier League, LaLiga, Europa League, Conference League en DFB-Pokal. Voor de Eredivisie, Serie A en KNVB-beker is er geen open bron, dus daar geen live stand. Geen pushmeldingen (daarvoor is een server nodig).
+Speelt een wedstrijd die je volgt en heb je de app open, dan vraagt hij elke minuut de stand op en toont hij op Vandaag, in Sport en in Deze week een rood LIVE-label met stand en minuut; na afloop 'Eindstand'. Daarbuiten vraagt hij niets. Aan of uit in Instellingen → Sport → Live standen (standaard aan, gaat mee in de backup). Bron: OpenLigaDB (gratis en open) voor Bundesliga, Champions League, Premier League, LaLiga, Europa League, Conference League en DFB-Pokal. Voor de Eredivisie, Serie A en KNVB-beker is er geen open bron, dus daar geen live stand. Let op: OpenLigaDB wordt door vrijwilligers bijgehouden en buiten Duitsland vaak niet tijdens de wedstrijd (3 november: Feyenoord–Inter stond daar niet in). Weet de bron de stand niet, dan toont de app geen stand, nooit een verzonnen 0-0. Geen pushmeldingen (daarvoor is een server nodig).
 
 ## Op je beginscherm zetten
 

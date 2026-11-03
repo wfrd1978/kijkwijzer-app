@@ -37,6 +37,12 @@ describe('live standen', () => {
     expect(vindStand(w('DED', 'Ajax', 'AZ', '2026-11-03T20:00:00Z'), s)?.uit).toBe('AZ Alkmaar');
     expect(vindStand(w('DED', 'Ajax', 'PSV', '2026-11-03T20:00:00Z'), s)).toBe(null);
   });
+  it('verzint geen 0-0 als OpenLigaDB een wedstrijd niet bijhoudt', () => {
+    const niet = uitOpenLigaDB([{ matchDateTimeUTC: '2020-11-03T20:00:00Z', matchDateTime: '2020-11-03T21:00:00', lastUpdateDateTime: '2020-08-29T18:29:34', team1: { teamName: 'Feyenoord Rotterdam' }, team2: { teamName: 'Inter Mailand' }, matchIsFinished: false, matchResults: [], goals: [] }]);
+    expect(standTekst(niet[0])).toBe(null);
+    const wel = uitOpenLigaDB([{ matchDateTimeUTC: '2020-11-03T20:00:00Z', matchDateTime: '2020-11-03T21:00:00', lastUpdateDateTime: '2020-11-03T21:20:00', team1: { teamName: 'A' }, team2: { teamName: 'B' }, matchIsFinished: false, matchResults: [], goals: [] }]);
+    expect(standTekst(wel[0])?.tekst).toBe('0-0');
+  });
   it('leest OpenLigaDB, ook een eindstand', () => {
     const standen = uitOpenLigaDB([
       { matchDateTimeUTC: '2026-10-31T14:30:00Z', team1: { teamName: 'Bayer 04 Leverkusen' }, team2: { teamName: 'VfB Stuttgart' }, matchIsFinished: true, matchResults: [{ resultOrderID: 1, pointsTeam1: 1, pointsTeam2: 2 }, { resultOrderID: 2, pointsTeam1: 2, pointsTeam2: 4 }], goals: [] },

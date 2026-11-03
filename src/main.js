@@ -1752,7 +1752,13 @@ async function werkLiveBij() {
       try {
         standen = await haalStanden(g.b, g.dag, g.wedstrijden.some((w) => inLiveVenster(w)));
       } catch {
-        continue; // deze bron lukt nu niet: dan geen stand, de rest gewoon wel
+        // De vaste bron lukt nu niet: dan de reserve, en anders geen stand (de rest gewoon wel).
+        if (!g.b.reserve) continue;
+        try {
+          standen = await haalStanden(g.b.reserve, g.dag, g.wedstrijden.some((w) => inLiveVenster(w)));
+        } catch {
+          continue;
+        }
       }
       for (const w of g.wedstrijden) {
         const t = standTekst(vindStand(w, standen));
@@ -2744,7 +2750,7 @@ async function toonInstellingen({ welkom = null } = {}) {
         </div>
       </div>
       <div data-groep="live" class="rij">
-        <span><span class="rij-kop">Live standen</span><span class="zacht rij-stand">Tijdens een wedstrijd elke minuut de stand (niet bij Eredivisie, Serie A en KNVB-beker)</span></span>
+        <span><span class="rij-kop">Live standen</span><span class="zacht rij-stand">Tijdens een wedstrijd elke minuut de stand</span></span>
         <div class="keuzes schakelaar" id="live-standen">
           <button class="keuze${liveAan() ? ' actief' : ''}" data-live-keuze="aan">Aan</button>
           <button class="keuze${liveAan() ? '' : ' actief'}" data-live-keuze="uit">Uit</button>

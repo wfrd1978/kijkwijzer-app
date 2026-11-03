@@ -1,19 +1,23 @@
 // Live standen: tijdens een wedstrijd haalt de app zelf de stand op (de schema's komen 's nachts,
-// dat is hiervoor te traag). Bron: OpenLigaDB (gratis en open, bedoeld voor dit gebruik), voor de
-// Bundesliga, Champions League, Premier League, LaLiga, Europa League, Conference League en DFB-Pokal.
-// De Eredivisie, Serie A en KNVB-beker heeft OpenLigaDB niet; daar is (nog) geen live stand.
+// dat is hiervoor te traag). Vaste bron: het scorebord van ESPN, voor alle competities. Dat is geen
+// officieel aangeboden dienst en kan zonder aankondiging stoppen (bewuste keuze van de eigenaar).
+// Antwoordt ESPN niet, dan als reserve OpenLigaDB (gratis en open, maar door vrijwilligers
+// bijgehouden: buiten Duitsland vaak niet tijdens de wedstrijd).
 
 const OLDB = (liga) => ({ bron: 'oldb', liga });
+const ESPN = (liga, reserve = null) => ({ bron: 'espn', liga, reserve });
 export const LIVE_BRON = {
-  CL: OLDB('ucl'),
-  PL: OLDB('pl'),
-  BL1: OLDB('bl1'),
-  PD: OLDB('la1'),
-  EL: OLDB('uel2026'),
-  ECL: OLDB('uecl2026'),
+  DED: ESPN('ned.1'),
+  SA: ESPN('ita.1'),
+  CL: ESPN('uefa.champions', OLDB('ucl')),
+  PL: ESPN('eng.1', OLDB('pl')),
+  BL1: ESPN('ger.1', OLDB('bl1')),
+  PD: ESPN('esp.1', OLDB('la1')),
+  EL: ESPN('uefa.europa', OLDB('uel2026')),
+  ECL: ESPN('uefa.europa.conf', OLDB('uecl2026')),
 };
 // Losse clubwedstrijden van TheSportsDB (bekers en dergelijke), op naam van de competitie.
-const PER_NAAM = { 'DFB-Pokal': OLDB('dfb'), 'Europa League': LIVE_BRON.EL, 'Conference League': LIVE_BRON.ECL };
+const PER_NAAM = { 'KNVB Beker': ESPN('ned.cup'), 'DFB-Pokal': ESPN('ger.dfb_pokal', OLDB('dfb')), 'Europa League': LIVE_BRON.EL, 'Conference League': LIVE_BRON.ECL };
 
 export function bronVoor(w) {
   return LIVE_BRON[w.competitie] ?? PER_NAAM[w.competitieNaam] ?? null;

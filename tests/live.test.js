@@ -5,10 +5,9 @@ const w = (competitie, thuis, uit, start = '2026-11-01T13:30:00Z', extra = {}) =
 
 describe('live standen', () => {
   it('kiest per competitie de bron', () => {
-    expect(bronVoor(w('DED', 'Ajax', 'AZ'))).toBe(null); // geen open bron voor de Eredivisie
-    expect(bronVoor(w('BL1', 'Bayern', 'Dortmund'))).toEqual({ bron: 'oldb', liga: 'bl1' });
-    expect(bronVoor(w('EXTRA', 'Ajax', 'NEC', undefined, { competitieNaam: 'KNVB Beker' }))).toBe(null);
-    expect(bronVoor(w('EXTRA', 'Bayern', 'Köln', undefined, { competitieNaam: 'DFB-Pokal' }))).toEqual({ bron: 'oldb', liga: 'dfb' });
+    expect(bronVoor(w('DED', 'Ajax', 'AZ'))).toEqual({ bron: 'espn', liga: 'ned.1', reserve: null });
+    expect(bronVoor(w('BL1', 'Bayern', 'Dortmund'))).toEqual({ bron: 'espn', liga: 'ger.1', reserve: { bron: 'oldb', liga: 'bl1' } });
+    expect(bronVoor(w('EXTRA', 'Ajax', 'NEC', undefined, { competitieNaam: 'KNVB Beker' }))).toEqual({ bron: 'espn', liga: 'ned.cup', reserve: null });
     expect(bronVoor(w('EXTRA', 'X', 'Y', undefined, { competitieNaam: 'FA Cup' }))).toBe(null);
   });
   it('vraagt alleen rond de wedstrijd', () => {

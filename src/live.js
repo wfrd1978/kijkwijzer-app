@@ -55,6 +55,8 @@ export function uitOpenLigaDB(wedstrijden) {
       start: m.matchDateTimeUTC,
       thuis: m.team1?.teamName ?? '',
       uit: m.team2?.teamName ?? '',
+      thuisNamen: [m.team1?.teamName, m.team1?.shortName].filter(Boolean),
+      uitNamen: [m.team2?.teamName, m.team2?.shortName].filter(Boolean),
       doelThuis,
       doelUit,
       toestand: m.matchIsFinished ? 'klaar' : begonnen ? 'live' : 'nog',
@@ -62,6 +64,8 @@ export function uitOpenLigaDB(wedstrijden) {
     };
   });
 }
+
+const namenVan = (team) => [team?.displayName, team?.shortDisplayName, team?.abbreviation, team?.name].filter(Boolean);
 
 export function uitEspn(antwoord) {
   return (antwoord?.events ?? []).map((e) => {
@@ -74,6 +78,8 @@ export function uitEspn(antwoord) {
       start: e.date,
       thuis: kant('home').team?.displayName ?? '',
       uit: kant('away').team?.displayName ?? '',
+      thuisNamen: namenVan(kant('home').team),
+      uitNamen: namenVan(kant('away').team),
       doelThuis: score(kant('home')),
       doelUit: score(kant('away')),
       toestand: staat === 'post' ? 'klaar' : staat === 'in' ? 'live' : 'nog',
@@ -92,9 +98,18 @@ function lijkt(a, b) {
   const [x, y] = [woorden(a), woorden(b)];
   return x.length > 0 && y.length > 0 && x.some((w) => y.some((v) => zelfdeWoord(w, v)));
 }
+// Elke naam die we van een club kennen ('PSG' en 'Paris Saint-Germain FC'), tegen elke naam van de bron.
+const eenLijkt = (onze, hun) => onze.filter(Boolean).some((a) => hun.filter(Boolean).some((b) => lijkt(a, b)));
 export function vindStand(w, standen) {
   const t = new Date(w.start).getTime();
-  return standen.find((s) => Math.abs(new Date(s.start).getTime() - t) <= 10 * 60000 && lijkt(w.thuis.naam, s.thuis) && lijkt(w.uit.naam, s.uit)) ?? null;
+  return (
+    standen.find(
+      (s) =>
+        Math.abs(new Date(s.start).getTime() - t) <= 10 * 60000 &&
+        eenLijkt([w.thuis.naam, w.thuis.vol], s.thuisNamen ?? [s.thuis]) &&
+        eenLijkt([w.uit.naam, w.uit.vol], s.uitNamen ?? [s.uit])
+    ) ?? null
+  );
 }
 
 // De tekst bij een wedstrijd: 'LIVE 2-1 · 67'' of '2-1' (eindstand). Null als er (nog) niets te tonen is.

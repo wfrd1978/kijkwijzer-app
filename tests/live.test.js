@@ -42,6 +42,11 @@ describe('live standen', () => {
     const wel = uitOpenLigaDB([{ matchDateTimeUTC: '2020-11-03T20:00:00Z', matchDateTime: '2020-11-03T21:00:00', lastUpdateDateTime: '2020-11-03T21:20:00', team1: { teamName: 'A' }, team2: { teamName: 'B' }, matchIsFinished: false, matchResults: [], goals: [] }]);
     expect(standTekst(wel[0])?.tekst).toBe('0-0');
   });
+  it('herkent een club aan zijn afkorting of volledige naam (PSG)', () => {
+    const standen = uitEspn({ events: [{ date: '2026-11-03T20:00Z', status: { displayClock: "61'", type: { state: 'in' } }, competitions: [{ competitors: [{ homeAway: 'home', score: '0', team: { displayName: 'Villarreal', shortDisplayName: 'Villarreal', abbreviation: 'VIL' } }, { homeAway: 'away', score: '5', team: { displayName: 'Paris Saint-Germain', shortDisplayName: 'PSG', abbreviation: 'PSG' } }] }] }] });
+    const psg = { competitie: 'CL', start: '2026-11-03T20:00:00Z', thuis: { naam: 'Villarreal', vol: 'Villarreal CF' }, uit: { naam: 'PSG', vol: 'Paris Saint-Germain FC' } };
+    expect(standTekst(vindStand(psg, standen))).toEqual({ live: true, tekst: "0-5 · 61'" });
+  });
   it('leest OpenLigaDB, ook een eindstand', () => {
     const standen = uitOpenLigaDB([
       { matchDateTimeUTC: '2026-10-31T14:30:00Z', team1: { teamName: 'Bayer 04 Leverkusen' }, team2: { teamName: 'VfB Stuttgart' }, matchIsFinished: true, matchResults: [{ resultOrderID: 1, pointsTeam1: 1, pointsTeam2: 2 }, { resultOrderID: 2, pointsTeam1: 2, pointsTeam2: 4 }], goals: [] },

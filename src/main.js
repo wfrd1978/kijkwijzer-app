@@ -983,15 +983,6 @@ async function toonVandaag() {
         ? ''
         : '<section class="welkom"><p class="zacht">Je lijst is nog leeg. Zoek een film of serie om te beginnen.</p><a class="hoofdknop" href="#/films">Zoek een titel</a></section>'
     }
-    <section class="vandaag-blok" id="npo-blok" hidden>
-      <h2 class="vak-kop">Vanavond op de NPO</h2>
-      <div id="npo"></div>
-    </section>
-    ${verder.length ? `<section class="vandaag-blok"><h2 class="vak-kop">Verder kijken</h2><div id="verder">${verder.map(verderKaart).join('')}</div></section>` : ''}
-    <section class="vandaag-blok" id="afleveringen-blok"${afleveringenNu ? '' : ' hidden'}>
-      <h2 class="vak-kop">Nieuwe afleveringen</h2>
-      <div id="afleveringen">${afleveringenNu}</div>
-    </section>
     ${
       sportOpVandaag()
         ? `<section class="vandaag-blok">
@@ -1005,6 +996,11 @@ async function toonVandaag() {
              </section>`
           : ''
     }
+    ${verder.length ? `<section class="vandaag-blok"><h2 class="vak-kop">Verder kijken</h2><div id="verder">${verder.map(verderKaart).join('')}</div></section>` : ''}
+    <section class="vandaag-blok" id="afleveringen-blok"${afleveringenNu ? '' : ' hidden'}>
+      <h2 class="vak-kop">Nieuwe afleveringen</h2>
+      <div id="afleveringen">${afleveringenNu}</div>
+    </section>
     ${
       leesSleutel()
         ? `<section class="vandaag-blok" id="nieuw-voor-jou-blok"${eigen.length ? ' hidden' : ''}>
@@ -1013,6 +1009,10 @@ async function toonVandaag() {
            </section>`
         : ''
     }
+    <section class="vandaag-blok" id="npo-blok" hidden>
+      <h2 class="vak-kop">Vanavond op de NPO</h2>
+      <div id="npo"></div>
+    </section>
     ${nieuwHtml(titels)}
   `;
 

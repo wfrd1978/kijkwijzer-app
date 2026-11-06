@@ -613,17 +613,40 @@ span.embleem { display: inline-flex; align-items: center; justify-content: cente
 .oranjekaart strong { font-family: var(--kop); font-weight: 800; font-size: 1.6rem; text-transform: uppercase; line-height: 1; }
 .oranjekaart .zender-chip { border-color: rgb(0 0 0 / 0.35); color: #1a0d00; }
 .oranjekaart .koers-kijk { color: #1a0d00; }
-/* Formule 1: racestrepen en een geblokte vlag */
-.race-volgend { position: relative; overflow: hidden; color: #fff; background: #17191d; }
-.race-volgend::before {
-  content: ''; position: absolute; right: 0; top: 0; width: 170px; height: 96px; pointer-events: none;
-  background: linear-gradient(115deg, transparent 30%, rgb(255 77 61 / 0.9) 30% 42%, transparent 42% 50%, rgb(255 77 61 / 0.55) 50% 56%, transparent 56%);
-}
-.race-volgend > * { position: relative; }
-.race-volgend::after {
-  content: ''; position: absolute; right: 0; top: 0; width: 72px; height: 48px; opacity: 0.85;
-  background: conic-gradient(#f3f1ec 25%, #0f1013 0 50%, #f3f1ec 0 75%, #0f1013 0) 0 0 / 24px 24px;
-}
+/* Racen: eigen tekening met strepen in de kleur van de klasse en een rood-witte curbstone */
+.livery { --streep: #e10600; position: relative; overflow: hidden; color: #fff;
+  background: repeating-linear-gradient(45deg, rgb(255 255 255 / 0.03) 0 2px, transparent 2px 6px), linear-gradient(160deg, #23262d, #060708 80%); }
+.livery-motogp { --streep: #ff6a13; }
+.livery-dtm { --streep: #1e90ff; }
+.livery-gtwc { --streep: #f5b800; }
+.livery-wec { --streep: #12b76a; }
+.race-tekening { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.race-tekening .streep { fill: var(--streep); }
+.livery-merk { position: absolute; right: 14px; top: 8px; font-family: var(--kop); font-weight: 800; font-style: italic; font-size: 4.2rem; line-height: 1; letter-spacing: -0.02em; color: transparent; -webkit-text-stroke: 2px rgb(255 255 255 / 0.85); pointer-events: none; }
+.race-volgend { color: #fff; }
+.race-volgend .race-tekening { inset: 0 0 auto auto; width: 62%; height: 130px; opacity: 0.9; -webkit-mask-image: linear-gradient(to left, #000 40%, transparent); mask-image: linear-gradient(to left, #000 40%, transparent); }
+.race-volgend .livery-merk { font-size: 3.2rem; top: 10px; }
+.race-volgend > :not(.race-tekening):not(.livery-merk) { position: relative; }
+.racekaart .kijktip-tekst { background: linear-gradient(to top, rgb(0 0 0 / 0.9), rgb(0 0 0 / 0.1) 75%); }
+/* Kleine tegel (week, sportnieuws): strepen en de afkorting */
+span.livery { display: grid; place-items: center;
+  background: linear-gradient(115deg, transparent 0 52%, var(--streep) 52% 66%, #f3f1ec 66% 70%, transparent 70%), linear-gradient(160deg, #2a2d34, #08090b); }
+span.livery b { font-family: var(--kop); font-weight: 800; font-style: italic; font-size: 1.05rem; letter-spacing: 0.01em; color: #fff; text-shadow: 0 1px 3px rgb(0 0 0 / 0.7); }
+.nieuws-beeld.livery b { font-size: 1.7rem; }
+.agenda-beeld.livery-motogp b { font-size: 0.7rem; }
+.nieuws-beeld.livery-motogp b { font-size: 1.05rem; }
+/* Landen: grote kaart voor een interland */
+.landkaart-groot { background: linear-gradient(130deg, #2b3a67, #10152a); }
+.landkaart-groot.is-oranje { background: linear-gradient(130deg, #ff8a1f, #b84800); }
+.landkaart-groot .livery-merk { font-style: normal; font-size: 5rem; -webkit-text-stroke-color: rgb(255 255 255 / 0.55); }
+.oranjekaart.landkaart { background: linear-gradient(120deg, #2b3a67, #18203d); color: #fff; }
+.oranjekaart.landkaart .koers-soort, .oranjekaart.landkaart .zacht { color: #dfe4f2; }
+.oranjekaart.landkaart .zender-chip, .oranjekaart.landkaart .koers-kijk { color: #fff; border-color: rgb(255 255 255 / 0.4); }
+.oranjekaart + .oranjekaart { margin-top: 10px; }
+.agenda-beeld.oranje.land { background: linear-gradient(120deg, #3a4c84, #1b2340); color: #fff; }
+.meer-regel a { color: var(--zacht); text-decoration: none; font-size: 0.88rem; }
+#motor:not(:empty) { margin-top: 26px; }
+.motor-meer { margin-top: 0; }
 .race-volgend .zacht { color: #c9ccd3; }
 .race-volgend .sessies li { border-color: #2a2d34; }
 
@@ -694,7 +717,6 @@ span.embleem { display: inline-flex; align-items: center; justify-content: cente
 .agenda-beeld.poster { height: 62px; width: 42px; object-fit: cover; border-radius: 6px; }
 .agenda-beeld.npo { object-fit: cover; }
 .agenda-beeld.icoon { display: flex; align-items: center; justify-content: center; background: var(--bg); font-family: var(--kop); font-weight: 800; font-size: 0.95rem; }
-.agenda-beeld.f1 { background: conic-gradient(#f3f1ec 25%, #0f1013 0 50%, #f3f1ec 0 75%, #0f1013 0) 0 0 / 15.3px 15.3px; border: 2px solid #ff4d3d; }
 .agenda-beeld.oranje { background: linear-gradient(120deg, #ff7a00, #c84f00); color: #1a0d00; }
 .agenda-beeld.wiel { font-size: 1.4rem; }
 .agenda-beeld.npo.icoon { color: #ff7a00; }
@@ -784,7 +806,6 @@ p.rij { display: block; }
 .motor-serie + .motor-serie { margin-top: 26px; }
 .motor-zender { margin: 12px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
 .agenda-beeld.icoon.motor { font-size: 1.3rem; }
-#sport-tabs button { font-size: 0.82rem; letter-spacing: 0.04em; }
 .motor-serie .race-ronde { padding-right: 84px; }
 
 /* Op je beginscherm zetten (zoals in de deelbare boekenapp) */
@@ -803,3 +824,36 @@ p.rij { display: block; }
 @keyframes live-puls { 50% { opacity: 0.6; } }
 .live-stand:not(.is-live) { color: var(--zacht); font-size: 0.95rem; }
 .kijktip-tekst .live-stand { color: #fff; }
+
+/* Sportnieuws (koppen van NOS Sport) */
+.sportnieuws { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.sportnieuws li { background: var(--vlak); border-radius: 14px; overflow: hidden; }
+.nieuws-regel { display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; color: var(--tekst); text-decoration: none; }
+.nieuws-beeld { flex: none; display: grid; place-items: center; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; }
+.nieuws-beeld img { width: 100%; height: 100%; }
+.nieuws-beeld.foto img { object-fit: cover; object-position: 50% 20%; }
+.nieuws-beeld.logo { background: #fff; padding: 10px; }
+.nieuws-beeld.logo img { object-fit: contain; }
+.nieuws-beeld.tegel { font-size: 1.9rem; background: linear-gradient(135deg, var(--accent), #7a1a10); }
+.nieuws-beeld.tegel.wielrennen { background: linear-gradient(135deg, #f2c200, #c27a00); }
+.nieuws-beeld.tegel.voetbal { background: linear-gradient(135deg, #2f8f46, #14532d); }
+.nieuws-wat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.nieuws-wat strong { font-weight: 650; line-height: 1.3; font-size: 1rem; }
+.nieuws-meta { font-size: 0.75rem; color: var(--zacht); text-transform: uppercase; letter-spacing: 0.06em; }
+.nieuws-bron { color: var(--accent); font-weight: 800; }
+.nieuws-foto-bron { margin: -4px 14px 8px 96px; font-size: 0.68rem; color: var(--zacht); }
+.nieuws-foto-bron a { color: inherit; }
+
+/* Kop van een blok op Vandaag met een link rechts */
+.blok-kop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+.blok-kop .vak-kop { margin: 0; }
+.blok-link { flex: none; font-size: 0.85rem; color: var(--zacht); text-decoration: none; }
+.nieuw-label { align-self: flex-start; padding: 2px 8px; border-radius: 6px; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* Motorsport (naast de Formule 1) */
+.motor-serie + .motor-serie { margin-top: 26px; }
+.motor-zender { margin: 12px 0 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.race-volgend .race-ronde, .race-volgend h3 { padding-right: 92px; }
+.race-volgend .race-tekening path[stroke] { display: none; }
+.race-volgend.livery-motogp .livery-merk { font-size: 2.2rem; }
+.race-volgend.livery-motogp .race-ronde, .race-volgend.livery-motogp h3 { padding-right: 130px; }

@@ -15,6 +15,9 @@ export const LIVE_BRON = {
   PD: ESPN('esp.1', OLDB('la1')),
   EL: ESPN('uefa.europa', OLDB('uel2026')),
   ECL: ESPN('uefa.europa.conf', OLDB('uecl2026')),
+  UNL: ESPN('uefa.nations'),
+  EC: ESPN('uefa.euro'),
+  WC: ESPN('fifa.world'),
 };
 // Losse clubwedstrijden van TheSportsDB (bekers en dergelijke), op naam van de competitie.
 const PER_NAAM = { 'KNVB Beker': ESPN('ned.cup'), 'DFB-Pokal': ESPN('ger.dfb_pokal', OLDB('dfb')), 'Europa League': LIVE_BRON.EL, 'Conference League': LIVE_BRON.ECL };

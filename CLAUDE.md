@@ -24,6 +24,8 @@ Adres: https://wfrd1978.github.io/kijkwijzer-app/
 | Online zetten | GitHub Pages via GitHub Actions, bij elke push en elke nacht | Gratis; geen server nodig |
 | Voetbalschema | football-data.org, nachtelijks opgehaald door GitHub (`scripts/voetbal.mjs`), sleutel als GitHub-geheim `FOOTBALL_DATA_KEY` | De app mag football-data niet zelf aanroepen |
 | Bekers en Europa League | TheSportsDB, vanuit de app, per club de eerstvolgende wedstrijd | Gratis aanvulling op football-data |
+| Sportnieuws | Koppen uit de RSS-feeds van NOS Sport, elk uur opgehaald door GitHub (`scripts/nieuws.mjs` → `nieuws.json`) | Volgens artikel 7 van de NOS-voorwaarden alleen de kop, letterlijk, met bronvermelding en link |
+| Nations League, EK, WK en interlands | TheSportsDB (gratis sleutel '123'); toernooien 's nachts via `scripts/voetbal.mjs`, de eerstvolgende interland per gekozen land vanuit de app | Gratis en open |
 | Motorsport (MotoGP, DTM, GT World Challenge, WEC) | TheSportsDB (gratis sleutel '123'), nachtelijks opgehaald door GitHub (`scripts/motorsport.mjs`) | Gratis, met tijden per onderdeel van het weekend |
 | Live standen | Het scorebord van ESPN voor alle competities (niet officieel aangeboden; bewuste keuze van de eigenaar), met OpenLigaDB als reserve; vanuit de app, alleen tijdens een wedstrijd | Alleen ESPN heeft alle competities snel; OpenLigaDB wordt buiten Duitsland nauwelijks bijgehouden |
 | ESPN-kanaal Eredivisie, NPO-gids | Nachtelijks opgehaald door GitHub (`scripts/espn.mjs`, `scripts/npo.mjs`) | Openbare pagina's; niet vanuit de app op te halen |

@@ -96,14 +96,14 @@ describe('NPO Plus en NPO Start', () => {
 });
 
 describe('beperkDiensten', () => {
-  const alle = [{ id: 223 }, { id: 2 }, { id: 8 }, { id: 999 }, { id: 72 }];
+  const alle = [{ id: 35 }, { id: 223 }, { id: 2 }, { id: 8 }, { id: 999 }, { id: 72 }];
   it('toont alleen de vaste lijst, in volgorde', () => {
-    expect(beperkDiensten(alle, {}).map((d) => d.id)).toEqual([8, 72, 223]);
+    expect(beperkDiensten(alle, {}).map((d) => d.id)).toEqual([8, 72, 35]);
   });
-  it('houdt diensten waarvoor je zelf iets koos', () => {
-    expect(beperkDiensten(alle, { 999: 'abonnement', 2: 'verbergen' }).map((d) => d.id)).toEqual([8, 72, 223, 2, 999]);
+  it('houdt een dienst waarop je een abonnement hebt, maar niet een verborgen', () => {
+    expect(beperkDiensten(alle, { 999: 'abonnement', 2: 'verbergen', 223: 'verbergen' }).map((d) => d.id)).toEqual([8, 72, 35, 999]);
   });
-  it('heeft twintig verschillende diensten', () => {
-    expect(new Set(NL_DIENSTEN).size).toBe(20);
+  it('heeft achttien verschillende diensten', () => {
+    expect(new Set(NL_DIENSTEN).size).toBe(18);
   });
 });

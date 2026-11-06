@@ -55,19 +55,16 @@ export const NL_DIENSTEN = [
   472, // NLZIET
   563, // KPN
   297, // Ziggo TV
-  // Aangevuld met vijf andere die in Nederland veel gebruikt worden:
   71, // Pathé Thuis
   396, // Film1
-  11, // MUBI
-  223, // Hayu
-  639, // CineMember
+  35, // Rakuten TV
 ];
 
-// Alleen de diensten uit de lijst hierboven, plus wat je zelf al op Abonnement of Verbergen zette
-// (zodat je die keuze altijd terug kunt draaien). Eerst de vaste lijst, in volgorde.
+// Alleen de diensten uit de lijst hierboven, plus een dienst waarop je zelf al Abonnement zette
+// (zodat je die keuze kunt zien en terugdraaien). Eerst de vaste lijst, in volgorde.
 export function beperkDiensten(alle, keuzes) {
   const plek = (d) => (NL_DIENSTEN.includes(d.id) ? NL_DIENSTEN.indexOf(d.id) : NL_DIENSTEN.length);
-  return alle.filter((d) => NL_DIENSTEN.includes(d.id) || keuzeVan(keuzes, d.id) !== 'tonen').sort((a, b) => plek(a) - plek(b));
+  return alle.filter((d) => NL_DIENSTEN.includes(d.id) || keuzeVan(keuzes, d.id) === 'abonnement').sort((a, b) => plek(a) - plek(b));
 }
 
 export function keuzeVan(keuzes, id) {

@@ -9,11 +9,12 @@ import { haalF1, komendeRaces, nlTijd, F1_ZENDERS, ZENDER_GIDS, SPORTZENDERS, le
 import { WIELRENNEN, komendeKoersen, kanIkKijken, koersDatum } from './wielrennen.js';
 import {
   COMPETITIES, COMPETITIE_PER_NAAM, VOETBAL_GECONTROLEERD, leesVoetbalKeuzes, zetVoetbalKeuzes, mijnWedstrijden, ploegenPerCompetitie,
-  perDag, weekStart, aftrap, dagNaam, haalOranje,
+  perDag, weekStart, aftrap, dagNaam, haalInterland, VOLG_LANDEN,
 } from './voetbal.js';
 import { uitnodigingTekst, deel } from './delen.js';
 import { weekDagen, weekTekst } from './vandaag.js';
-import { SERIES, leesMotorKeuzes, zetMotorKeuzes, komendeMotorraces, isTraining } from './motorsport.js';
+import { SERIES, leesMotorKeuzes, zetMotorKeuzes, komendeMotorraces, isTraining, f1Volgen, zetF1Volgen } from './motorsport.js';
+import { nieuwsVoorJou } from './nieuws.js';
 import { kanaalVoor } from './espn.js';
 import { haalExtraWedstrijden, alBekend, EXTRA_ZENDERS } from './beker.js';
 import { vanVandaag, ruimOudeDagenOp, dagSleutel } from './dagcache.js';
@@ -653,7 +654,21 @@ function rasterHtml(titels, opLijst, onder = (t) => (t.jaar ? veilig(t.jaar) : '
 
 // --- Vandaag ---
 
-function verderKaart(t) {
+// Kop van een blok op Vandaag, met rechts eventueel een korte link (bijvoorbeeld naar het hele schema).
+function blokKop(titel, link) {
+  if (!link) return `<h2 class="vak-kop">${titel}</h2>`;
+  const extern = /^https:/.test(link.href);
+  return `<div class="blok-kop"><h2 class="vak-kop">${titel}</h2><a class="blok-link" href="${link.href}"${extern ? ' target="_blank" rel="noopener noreferrer"' : ''}>${link.tekst} ›</a></div>`;
+}
+
+const gisterenDag = () => {
+  const d = new Date(`${vandaag()}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
+
+function verderKaart(t, stand = leesAfleveringen()) {
+  const nieuw = afleveringenOp([t], stand, [gisterenDag(), vandaag()]).pop();
   const v = t.voortgang ?? beginVoortgang();
   const seizoenen = t.seizoenen ?? [];
   const dit = seizoenen.find((x) => x.nr === v.seizoen);
@@ -662,6 +677,7 @@ function verderKaart(t) {
     <div class="verder-kaart" data-id="${t.id}">
       <a href="#/titel/${t.id}" tabindex="-1">${posterHtml(t)}</a>
       <div class="verder-tekst">
+        ${nieuw ? `<span class="nieuw-label">Nieuwe aflevering ${nieuw.dag === vandaag() ? 'vandaag' : 'gisteren'} · ${afleveringKort(nieuw)}</span>` : ''}
         <a href="#/titel/${t.id}"><strong>${veilig(t.titel)}</strong></a>
         <span class="zacht">${
           v.aflevering ? `Seizoen ${v.seizoen} · aflevering ${v.aflevering}${dit ? ` van ${dit.afleveringen}` : ''}` : `Seizoen ${v.seizoen} · nog niet begonnen`
@@ -678,7 +694,13 @@ function verderKaart(t) {
 // Alles aan voetbal, Formule 1 en wielrennen dat jij volgt, op de gevraagde dagen ('jjjj-mm-dd').
 async function sportItems(dagen) {
   const op = new Set(dagen);
-  const [schema, f1, oranje, kanalen, motor] = await Promise.all([haalVoetbal(), haalF1().catch(() => null), haalOranjeVanDaag(), haalEspn(), leesMotorKeuzes().length ? haalKlaargezet('motorsport') : null]);
+  const [schema, f1, interlands, kanalen, motor] = await Promise.all([
+    haalVoetbal(),
+    f1Volgen() ? haalF1().catch(() => null) : null,
+    haalInterlandsVanDaag(),
+    haalEspn(),
+    leesMotorKeuzes().length ? haalKlaargezet('motorsport') : null,
+  ]);
   const items = [];
   if (schema) {
     for (const w of mijnWedstrijden(schema.wedstrijden, leesVoetbalKeuzes()).filter((x) => op.has(nlDagVan(x)))) {
@@ -686,12 +708,18 @@ async function sportItems(dagen) {
       items.push({ w, dag: nlDagVan(w), start: w.start, tijd: aftrap(w.start), naam: `${w.thuis.naam} – ${w.uit.naam}`, sub: c.naam, zenders: zendersVan(w, kanalen), soort: 'voetbal', thuis: w.thuis, uit: w.uit, mijnClub: [w.thuis.id, w.uit.id].some((id) => leesVoetbalKeuzes().clubs.includes(id)) });
     }
   }
-  if (oranje && op.has(nlDagVan(oranje))) {
-    items.push({ dag: nlDagVan(oranje), start: oranje.start, tijd: aftrap(oranje.start), naam: `${oranje.thuis} – ${oranje.uit}`, sub: oranje.competitie, zenders: oranje.zenders, soort: 'oranje' });
+  // Interlands van je landen; staat de wedstrijd al in het schema (Nations League, EK, WK), dan niet dubbel.
+  for (const l of interlands.filter((x) => op.has(nlDagVan(x)))) {
+    const zelfde = items.find((x) => x.soort === 'voetbal' && new Date(x.start).getTime() === new Date(l.start).getTime() && x.naam === `${l.thuis} – ${l.uit}`);
+    if (zelfde) {
+      zelfde.land = l.land; // dan de kaart met emblemen, maar wel als wedstrijd van jouw land
+      continue;
+    }
+    items.push({ dag: nlDagVan(l), start: l.start, tijd: aftrap(l.start), naam: `${l.thuis} – ${l.uit}`, sub: l.competitie, zenders: l.zenders, soort: 'oranje', land: l.land });
   }
   for (const r of f1?.races ?? []) {
     for (const s of r.sessies.filter((x) => op.has(nlDagVan(x)))) {
-      items.push({ dag: nlDagVan(s), start: s.start, tijd: s.metTijd ? aftrap(s.start) : '', naam: `${s.naam} · ${r.naam}`, sub: 'Formule 1', zenders: [{ naam: F1_ZENDERS.live, zeker: true }], soort: 'f1', sessie: s.naam });
+      items.push({ dag: nlDagVan(s), start: s.start, tijd: s.metTijd ? aftrap(s.start) : '', naam: `${s.naam} · ${r.naam}`, sub: 'Formule 1', zenders: [{ naam: F1_ZENDERS.live, zeker: true }], soort: 'f1', sessie: s.naam, race: r.naam, ronde: r.ronde });
     }
   }
   // Motorsport: de raceklassen die je in Instellingen koos.
@@ -699,7 +727,7 @@ async function sportItems(dagen) {
     for (const race of motor?.series?.[k]?.races ?? []) {
       // Trainingen alleen op het tabblad Motorsport; hier kwalificaties en races.
       for (const s of race.sessies.filter((x) => op.has(nlDagVan(x)) && !isTraining(x.naam))) {
-        items.push({ dag: nlDagVan(s), start: s.start, tijd: s.metTijd ? aftrap(s.start) : '', naam: `${s.naam} · ${race.naam}${race.reeks ? ` (${race.reeks})` : ''}`, sub: SERIES[k].naam, zenders: SERIES[k].zenders, soort: 'motor', sessie: s.naam, serie: k });
+        items.push({ dag: nlDagVan(s), start: s.start, tijd: s.metTijd ? aftrap(s.start) : '', naam: `${s.naam} · ${race.naam}${race.reeks ? ` (${race.reeks})` : ''}`, sub: SERIES[k].naam, zenders: SERIES[k].zenders, soort: 'motor', sessie: s.naam, serie: k, race: race.naam });
       }
     }
   }
@@ -718,24 +746,58 @@ function eenZender(zenders, mijn) {
 
 async function sportVandaagHtml() {
   const mijn = leesSportzenders();
-  const [items, schema, kanalen] = await Promise.all([sportItems([vandaag()]), haalVoetbal(), haalEspn()]);
+  const items = await sportItems([vandaag()]);
   if (!items.length) return '<p class="leeg-klein">Geen sport vandaag bij jouw keuzes. <a href="#/sport">Bekijk het schema</a></p>';
-  // Speelt een van je clubs vandaag, dan die wedstrijd groot bovenaan.
-  const club = schema ? volgendeVanMijnClub(schema.wedstrijden, leesVoetbalKeuzes()) : null;
-  const kaart = club && nlDagVan(club) === vandaag() ? wedstrijdKaart(club, zendersVan(club, kanalen), mijn, `Jouw club · ${competitieVan(club).naam}`) : '';
-  // De uitgelichte wedstrijd niet nog een keer in de lijst.
-  const rest = kaart ? items.filter((x) => !(x.start === club.start && x.naam === `${club.thuis.naam} – ${club.uit.naam}`)) : items;
-  return `${kaart}${rest.length ? `<ul class="sport-vandaag">${rest
-    .map((x) => {
-      const z = eenZender(x.zenders, mijn);
-      return `
+  // Eén grote kaart, zoals bij Vanavond op de NPO: wat nog moet komen en het meest van jou is
+  // (je club, Oranje, een race), daaronder kort de rest.
+  const nu = Date.now();
+  const nogTeGaan = (x) => !x.tijd || new Date(x.start).getTime() + 2 * 3600000 > nu;
+  const gewicht = (x) =>
+    x.mijnClub ? 6 : x.soort === 'oranje' || x.land ? (x.land === 'NL' ? 5 : 3) : ['f1', 'motor'].includes(x.soort) ? (/^(Race|Sprint)/.test(x.sessie) ? (x.soort === 'f1' ? 4.5 : 4) : 2) : x.soort === 'voetbal' ? 2 : 1;
+  const [groot] = [...items].sort((a, b) => nogTeGaan(b) - nogTeGaan(a) || gewicht(b) - gewicht(a) || a.start.localeCompare(b.start));
+  const rest = items.filter((x) => x !== groot);
+  const regels = rest.slice(0, 3);
+  return `${sportKaart(groot, mijn)}${
+    regels.length
+      ? `<ul class="sport-vandaag npo-ook">${regels
+          .map((x) => {
+            const z = eenZender(x.zenders, mijn);
+            return `
       <li>
         <span class="sport-tijd${x.tijd ? '' : ' dag'}">${x.tijd ? veilig(x.tijd) : 'Hele dag'}</span>
-        <div class="sport-wat"><strong>${veilig(x.naam)}</strong>${x.w ? liveVak(x.w) : ''}<span class="zacht">${veilig(x.sub)}</span></div>
+        <a class="sport-wat afl-link" href="#/sport"><strong>${veilig(x.naam)}</strong>${x.w ? liveVak(x.w) : ''}<span class="zacht">${veilig(x.sub)}</span></a>
         ${z ? zenderChip(z, mijn, true) : ''}
       </li>`;
-    })
-    .join('')}</ul>` : ''}`;
+          })
+          .join('')}${rest.length > regels.length ? `<li class="meer-regel"><a href="#/sport">Nog ${rest.length - regels.length} in Sport ›</a></li>` : ''}</ul>`
+      : ''
+  }`;
+}
+
+// De grote kaart bovenaan Sport vandaag: emblemen bij voetbal, de racetekening bij racen,
+// oranje bij Oranje, bergen bij wielrennen.
+function sportKaart(x, mijn) {
+  const z = eenZender(x.zenders, mijn);
+  const wanneer = [x.tijd ? `Vandaag ${x.tijd}` : 'Vandaag', z ? z.kanaal || z.naam : ''].filter(Boolean).join(' · ');
+  const tekst = (label, titel) => `
+      <div class="kijktip-tekst">
+        <span class="kijktip-label">${veilig(label)}</span>
+        <strong>${veilig(titel)}</strong>
+        <span>${veilig(wanneer)}</span>
+      </div>`;
+  if (x.soort === 'voetbal') {
+    const wie = x.mijnClub ? 'Jouw club' : x.land ? (x.land === 'NL' ? 'Oranje' : VOLG_LANDEN[x.land]?.naam) : '';
+    return wedstrijdKaart(x.w, x.zenders, mijn, wie ? `${wie} · ${x.sub}` : x.sub);
+  }
+  if (x.soort === 'f1' || x.soort === 'motor') {
+    const serie = x.soort === 'f1' ? 'f1' : x.serie;
+    return `<a class="kijktip sportkaart racekaart livery livery-${veilig(serie)}" href="#/sport">${RACE_TEKENING}<span class="livery-merk" aria-hidden="true">${veilig(RACE_MERK[serie] ?? '')}</span>${tekst(`${x.sub}${x.ronde ? ` · ronde ${x.ronde}` : ''} · ${x.sessie}`, x.race ?? x.naam)}</a>`;
+  }
+  if (x.soort === 'oranje') {
+    const nl = x.land === 'NL';
+    return `<a class="kijktip sportkaart landkaart-groot${nl ? ' is-oranje' : ''}" href="#/sport"><span class="livery-merk" aria-hidden="true">${veilig(x.land ?? 'NL')}</span>${tekst(`${nl ? 'Oranje' : VOLG_LANDEN[x.land]?.naam ?? ''} · ${x.sub}`, x.naam)}</a>`;
+  }
+  return `<a class="kijktip sportkaart koerskaart" href="#/sport">${BERGEN}${tekst(x.sub, x.naam)}</a>`;
 }
 
 // Deze week: maandag tot en met zondag, per dag wat jij volgt. Afgelopen dagen staan grijs.
@@ -770,10 +832,10 @@ function agendaBeeld(x) {
     const beeld = veiligeUrl(x.beeld);
     return beeld ? `<img class="agenda-beeld npo" src="${beeld}" alt="" loading="lazy" />` : '<span class="agenda-beeld icoon npo">NPO</span>';
   }
-  if (x.soort === 'f1') return '<span class="agenda-beeld icoon f1" aria-hidden="true"></span>';
-  if (x.soort === 'motor') return `<span class="agenda-beeld icoon motor" aria-hidden="true">${x.serie === 'motogp' ? '🏍' : '🏁'}</span>`;
+  if (x.soort === 'f1') return raceTegel('f1', 'agenda-beeld');
+  if (x.soort === 'motor') return raceTegel(x.serie, 'agenda-beeld');
   if (x.soort === 'wiel') return '<span class="agenda-beeld icoon wiel">🚴</span>';
-  if (x.soort === 'oranje') return '<span class="agenda-beeld icoon oranje">NL</span>';
+  if (x.soort === 'oranje') return `<span class="agenda-beeld icoon oranje${x.land && x.land !== 'NL' ? ' land' : ''}">${veilig(x.land ?? 'NL')}</span>`;
   return '<span class="agenda-beeld icoon"></span>';
 }
 
@@ -935,8 +997,7 @@ function nieuwVoorJouHtml(t) {
         <strong>${veilig(t.titel)}</strong>
         <span>${soortJaar(t)}</span>
       </div>
-    </button>
-    <p class="bron">Elke dag een andere tip, gekozen op de genres van wat je hoog waardeert en wilt zien.</p>`;
+    </button>`;
 }
 
 // Sport volgen aan of uit (in Instellingen, bij Sport). Uit: nergens sport in de app (geen Sport-knop,
@@ -966,8 +1027,7 @@ function kijktipsHtml(tips) {
         </span>
       </button></li>`;
     })
-    .join('')}</ul>
-    <p class="bron">Goed gewaardeerd door kijkers (TMDB), te zien bij jouw diensten en in de genres die jij graag ziet. Elke dag een ander rijtje.</p>`;
+    .join('')}</ul>`;
 }
 
 async function toonVandaag() {
@@ -1005,8 +1065,12 @@ async function toonVandaag() {
     ${
       sportOpVandaag()
         ? `<section class="vandaag-blok">
-             <h2 class="vak-kop">Sport vandaag</h2>
+             ${blokKop('Sport vandaag', { href: '#/sport', tekst: 'Schema' })}
              <div id="sport-vandaag"><p class="bezig">Ophalen…</p></div>
+           </section>
+           <section class="vandaag-blok" id="sportnieuws-blok" hidden>
+             ${blokKop('Sportnieuws', { href: 'https://nos.nl/sport', tekst: 'Meer bij NOS' })}
+             <div id="sportnieuws"></div>
            </section>`
         : leesSleutel() && eigen.length
           ? `<section class="vandaag-blok" id="kijktips-blok" hidden>
@@ -1015,7 +1079,7 @@ async function toonVandaag() {
              </section>`
           : ''
     }
-    ${verder.length ? `<section class="vandaag-blok"><h2 class="vak-kop">Verder kijken</h2><div id="verder">${verder.map(verderKaart).join('')}</div></section>` : ''}
+    ${verder.length ? `<section class="vandaag-blok">${blokKop('Verder kijken', { href: '#/films', tekst: 'Mijn lijst' })}<div id="verder">${verder.map(verderKaart).join('')}</div></section>` : ''}
     <section class="vandaag-blok" id="afleveringen-blok"${afleveringenNu ? '' : ' hidden'}>
       <h2 class="vak-kop">Nieuwe afleveringen</h2>
       <div id="afleveringen">${afleveringenNu}</div>
@@ -1029,7 +1093,7 @@ async function toonVandaag() {
         : ''
     }
     <section class="vandaag-blok" id="npo-blok" hidden>
-      <h2 class="vak-kop">Vanavond op de NPO</h2>
+      ${blokKop('Vanavond op de NPO', { href: '#/instellingen', tekst: 'Afstemmen' })}
       <div id="npo"></div>
     </section>
     ${nieuwHtml(titels)}
@@ -1100,14 +1164,20 @@ async function toonVandaag() {
   const afleveringenBlok = async () => {
     if (!leesSleutel()) return;
     const stand = await werkAfleveringenBij(titels, vandaag(), haalAfleveringen);
-    const seizoenenNieuw = await werkSeizoenenBij(titels, stand);
+    await werkSeizoenenBij(titels, stand);
     if (nr !== schermNr) return;
-    if (seizoenenNieuw && document.getElementById('verder')) document.getElementById('verder').innerHTML = verder.map(verderKaart).join('');
+    if (document.getElementById('verder')) document.getElementById('verder').innerHTML = verder.map((t) => verderKaart(t, stand)).join('');
     const html = afleveringenHtml(titels, stand);
     document.getElementById('afleveringen').innerHTML = html;
     document.getElementById('afleveringen-blok').hidden = !html;
   };
-  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, tipsBlokken(), npoBlok(), afleveringenBlok()]);
+  const nieuwsBlok = async () => {
+    const html = await sportnieuwsHtml();
+    if (nr !== schermNr || !html) return;
+    document.getElementById('sportnieuws').innerHTML = html;
+    document.getElementById('sportnieuws-blok').hidden = false;
+  };
+  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, sportOpVandaag() ? nieuwsBlok() : null, tipsBlokken(), npoBlok(), afleveringenBlok()]);
 }
 
 // Vanavond op de NPO: één grote tip (iets van je lijst gaat voor), en nog twee kleinere.
@@ -1141,7 +1211,7 @@ function npoHtml(avond) {
             .join('')}</ul>`
         : ''
     }
-    <p class="bron">Uit de tv-gids van NPO. Tik voor meer informatie. Afstemmen op wat jij graag ziet kan in <a href="#/instellingen">Instellingen</a> bij Tv-tips.</p>`;
+`;
 }
 
 // Meer over een programma uit de NPO-gids, met knoppen om te kijken.
@@ -1200,10 +1270,8 @@ async function werkSeizoenenBij(titels, stand) {
 
 // Afleveringen van gisteren en vandaag, van series op je lijst.
 function afleveringenHtml(titels, stand) {
-  const gisteren = new Date(`${vandaag()}T12:00:00Z`);
-  gisteren.setUTCDate(gisteren.getUTCDate() - 1);
-  const g = gisteren.toISOString().slice(0, 10);
-  const lijst = afleveringenOp(titels, stand, [g, vandaag()]).reverse();
+  // Series met voortgang staan al bij Verder kijken (met een label); hier alleen de andere.
+  const lijst = afleveringenOp(titels, stand, [gisterenDag(), vandaag()]).filter((e) => !e.titel.voortgang).reverse();
   if (!lijst.length) return '';
   return `<ul class="sport-vandaag">${lijst
     .map((e) => {
@@ -1723,6 +1791,78 @@ function embleem(p, klasse = 'embleem') {
 }
 
 // Grote kaart voor één wedstrijd, in de stijl van Vanavond op de NPO: beide emblemen groot in beeld.
+// --- Sportnieuws: koppen van NOS Sport (elk uur klaargezet door GitHub, scripts/nieuws.mjs) ---
+// Volgens de voorwaarden van de NOS alleen de kop, letterlijk, met duidelijke bronvermelding en een
+// link naar het hele bericht bij de NOS.
+let nieuwsGeladen = null; // { op, data }: hooguit 10 minuten bewaard, nieuws moet vers zijn
+async function haalNieuws() {
+  if (nieuwsGeladen && Date.now() - nieuwsGeladen.op < 10 * 60000) return nieuwsGeladen.data;
+  const antwoord = await fetch(`${import.meta.env.BASE_URL}nieuws.json`, { cache: 'no-cache' });
+  if (!antwoord.ok) throw new Error(`status ${antwoord.status}`);
+  const data = await antwoord.json();
+  nieuwsGeladen = { op: Date.now(), data };
+  return data;
+}
+
+function nieuwsTijd(iso) {
+  const d = new Date(iso);
+  const dag = nlDagVan({ start: iso });
+  const tijd = d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' });
+  if (dag === vandaag()) return tijd;
+  const gisteren = new Date(`${vandaag()}T12:00:00Z`);
+  gisteren.setUTCDate(gisteren.getUTCDate() - 1);
+  if (dag === gisteren.toISOString().slice(0, 10)) return `gisteren ${tijd}`;
+  return `${d.toLocaleDateString('nl-NL', { weekday: 'long', timeZone: 'Europe/Amsterdam' })} ${tijd}`;
+}
+
+async function sportnieuwsHtml() {
+  let data;
+  try {
+    data = await haalNieuws();
+  } catch {
+    return '';
+  }
+  // Je clubs als namen: uit het voetbalschema (clubs staan daar met korte en volledige naam).
+  const keuzes = leesVoetbalKeuzes();
+  const schema = keuzes.clubs.length ? await haalVoetbalSchema() : null;
+  const ploegen = new Map((schema?.wedstrijden ?? []).flatMap((w) => [w.thuis, w.uit]).map((p) => [p.id, p]));
+  const clubs = [
+    ...keuzes.clubs.map((id) => ploegen.get(id)).filter(Boolean),
+    ...keuzes.landen.map((c) => ({ naam: c === 'NL' ? 'Oranje' : VOLG_LANDEN[c].naam, land: true })),
+  ];
+  const items = nieuwsVoorJou(data.items ?? [], { clubs, alles: keuzes.alles, f1: f1Volgen() }).filter((x) => /^https:\/\/nos\.nl\//.test(veiligeUrl(x.link) ?? ''));
+  if (!items.length) return '';
+  const ICOON = { voetbal: '⚽', f1: '🏁', wielrennen: '🚴', sport: '🏅' };
+  // Beeld bij een kop: het logo van je club, anders een vrije foto van de hoofdpersoon (Wikimedia
+  // Commons, met maker en licentie), anders een tegel met het teken van de sport.
+  const beeld = (x) => {
+    const logo = veiligeUrl(x.club?.logo);
+    if (logo) return `<span class="nieuws-beeld logo"><img src="${logo}" alt="" loading="lazy" /></span>`;
+    const foto = veiligeUrl(x.foto?.url);
+    if (foto && /^https:\/\/(upload|thumb)\.wikimedia\.org\//.test(foto)) return `<span class="nieuws-beeld foto"><img src="${foto}" alt="${veilig(x.foto.wie ?? '')}" loading="lazy" /></span>`;
+    if (x.soort === 'f1') return raceTegel('f1', 'nieuws-beeld tegel');
+    return `<span class="nieuws-beeld tegel ${veilig(x.soort)}" aria-hidden="true">${ICOON[x.soort] ?? '🏅'}</span>`;
+  };
+  const fotoBron = (x) => {
+    if (x.club?.logo || !x.foto) return '';
+    const pagina = veiligeUrl(x.foto.pagina);
+    const tekst = `Foto ${veilig(x.foto.wie ?? '')}: ${veilig(x.foto.maker ?? 'onbekend')}, ${veilig(x.foto.licentie ?? '')}`;
+    return `<p class="nieuws-foto-bron">${pagina && /^https:\/\/commons\.wikimedia\.org\//.test(pagina) ? `<a href="${pagina}" target="_blank" rel="noopener noreferrer">${tekst}</a>` : tekst}</p>`;
+  };
+  return `<ul class="sportnieuws">${items
+    .map(
+      (x) => `
+      <li><a class="nieuws-regel" href="${veiligeUrl(x.link)}" target="_blank" rel="noopener noreferrer">
+        ${beeld(x)}
+        <span class="nieuws-wat">
+          <span class="nieuws-meta"><b class="nieuws-bron">NOS</b> · ${veilig(nieuwsTijd(x.tijd))}${x.waarom ? ` · ${veilig(x.waarom)}` : ''}</span>
+          <strong>${veilig(x.titel)}</strong>
+        </span>
+      </a>${fotoBron(x)}</li>`
+    )
+    .join('')}</ul>`;
+}
+
 // --- Live standen (aan/uit in Instellingen bij Sport) ---
 const liveAan = () => onthoud('liveStanden', 'aan', ['aan', 'uit']) === 'aan';
 const liveWedstrijden = new Map(); // id → wedstrijd, voor de plekken die nu op het scherm staan
@@ -1836,6 +1976,19 @@ function zenderChip(z, mijn, kort = false) {
     ? `<a class="${klasse} met-gids" href="${veiligeUrl(gids)}" target="_blank" rel="noopener noreferrer" aria-label="${veilig(z.naam)}: bekijk in de gids op welk kanaal">${tekst} ›</a>`
     : `<span class="${klasse}">${tekst}</span>`;
 }
+
+// Racen: eigen tekening (geen logo's van de raceklassen): schuine strepen in de kleur van de klasse
+// en een rood-witte curbstone, met groot de afkorting. Gebruikt op de grote kaart, bij de
+// eerstvolgende race in Sport, en klein als tegel in de week en bij het sportnieuws.
+const RACE_MERK = { f1: 'F1', motogp: 'MotoGP', dtm: 'DTM', gtwc: 'GT', wec: 'WEC' };
+const RACE_TEKENING = `<svg class="race-tekening" viewBox="0 0 400 190" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
+  <path d="M262 0 H318 L196 190 H140 Z" class="streep" />
+  <path d="M328 0 H338 L216 190 H206 Z" fill="#f3f1ec" />
+  <path d="M350 0 H380 L258 190 H228 Z" class="streep" opacity="0.55" />
+  <path d="M-10 172 C110 132 250 206 410 128" stroke="#e10600" stroke-width="12" fill="none" />
+  <path d="M-10 172 C110 132 250 206 410 128" stroke="#f3f1ec" stroke-width="12" stroke-dasharray="18 18" fill="none" />
+</svg>`;
+const raceTegel = (serie, klasse) => `<span class="${klasse} livery livery-${veilig(serie)}" aria-hidden="true"><b>${veilig(RACE_MERK[serie] ?? '')}</b></span>`;
 
 // Getekende bergen (eigen tekening, geen foto) als achtergrond voor de koerskaart.
 const BERGEN = `<svg class="sportkaart-tekening" viewBox="0 0 400 190" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
@@ -1982,11 +2135,18 @@ function competitieVan(w) {
   return COMPETITIES[w.competitie] ?? COMPETITIES[COMPETITIE_PER_NAAM[w.competitieNaam]] ?? { naam: w.competitieNaam ?? 'Overige wedstrijd', kort: w.competitieNaam ?? '', zenders: EXTRA_ZENDERS[w.competitieNaam] ?? [] };
 }
 
-// De volgende interland van Oranje, één keer per dag.
-async function haalOranjeVanDaag() {
-  // Ook 'geen interland gepland' onthouden, zodat het niet steeds opnieuw wordt gevraagd.
-  const x = await vanVandaag('oranje-nl', async () => ({ wedstrijd: await haalOranje() }));
-  return x?.wedstrijd ?? null;
+// De volgende interland van elk land dat je volgt, één keer per dag per land.
+async function haalInterlandsVanDaag() {
+  const lijst = await Promise.all(
+    leesVoetbalKeuzes().landen.map(async (land) => {
+      // Ook 'geen interland gepland' onthouden, zodat het niet steeds opnieuw wordt gevraagd.
+      const x = await vanVandaag(`interland-${land}`, async () => ({ wedstrijd: await haalInterland(land) })).catch(() => null);
+      return x?.wedstrijd ?? null;
+    })
+  );
+  // Twee van je landen tegen elkaar: één keer.
+  // Oranje voorop, dan op datum.
+  return lijst.filter((x, i) => x && lijst.findIndex((y) => y?.id === x.id) === i).sort((a, b) => (b.land === 'NL') - (a.land === 'NL') || a.start.localeCompare(b.start));
 }
 
 // De avonden op NPO 1, 2 en 3 die GitHub dagelijks klaarzet. Null als het (nog) niet bestaat.
@@ -2027,24 +2187,26 @@ function kijkTekst(zenders, mijn) {
 
 async function toonVoetbal(nr, mijn) {
   const vak = () => (nr === schermNr ? document.getElementById('voetbal') : null);
-  const [schema, oranje] = await Promise.all([haalVoetbal(), haalOranjeVanDaag()]);
+  const [schema, interlands] = await Promise.all([haalVoetbal(), haalInterlandsVanDaag()]);
   if (!vak()) return;
   const keuzes = leesVoetbalKeuzes();
-  const oranjeHtml = oranje
-    ? `<div class="oranje oranjekaart">
-         <span class="koers-soort">Oranje · volgende interland</span>
-         <strong>${veilig(oranje.thuis)} – ${veilig(oranje.uit)}</strong>
-         <span class="zacht">${veilig(dagNaam(nlDagVan(oranje), vandaag()))} · ${veilig(aftrap(oranje.start))} · ${veilig(oranje.competitie)}</span>
-         <div class="koers-zenders">${zenderChips(oranje.zenders, mijn)}</div>
-         ${kijkTekst(oranje.zenders, mijn)}
+  const oranjeHtml = interlands
+    .map(
+      (l) => `<div class="oranje oranjekaart${l.land === 'NL' ? '' : ' landkaart'}">
+         <span class="koers-soort">${l.land === 'NL' ? 'Oranje' : veilig(VOLG_LANDEN[l.land].naam)} · volgende interland</span>
+         <strong>${veilig(l.thuis)} – ${veilig(l.uit)}</strong>
+         <span class="zacht">${veilig(dagNaam(nlDagVan(l), vandaag()))} · ${veilig(aftrap(l.start))} · ${veilig(l.competitie)}</span>
+         ${l.zenders.length ? `<div class="koers-zenders">${zenderChips(l.zenders, mijn)}</div>${kijkTekst(l.zenders, mijn)}` : ''}
        </div>`
-    : '';
+    )
+    .join('');
+
   if (!schema) {
     vak().innerHTML = `${oranjeHtml}<p class="leeg">Het voetbalschema is nu even niet beschikbaar. Probeer het later nog eens.</p>`;
     return;
   }
   if (!keuzes.clubs.length && !keuzes.alles.length) {
-    vak().innerHTML = `${oranjeHtml}<p class="leeg">Kies in <a href="#/instellingen">Instellingen</a> bij Voetbal je clubs en competities.</p>`;
+    vak().innerHTML = `${oranjeHtml}<p class="leeg">Kies in <a href="#/instellingen">Instellingen</a> bij Voetbal je clubs, landen en competities.</p>`;
     return;
   }
   const dagen = perDag(mijnWedstrijden(schema.wedstrijden, keuzes).filter((w) => w.status !== 'FINISHED' || nlDagVan(w) === vandaag()));
@@ -2102,7 +2264,7 @@ async function toonVoetbal(nr, mijn) {
     }
     <div class="oranje-onder">${oranjeHtml}</div>
     <p class="bron">${extraTekst()}</p>
-    <p class="bron">Tijden in Nederlandse tijd. Schema van football-data.org (Europa League en Conference League via TheSportsDB, zo nodig OpenLigaDB), bijgewerkt ${veilig(new Date(schema.op).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' }))}. Oranje via TheSportsDB. Zenders gecontroleerd in ${veilig(VOETBAL_GECONTROLEERD)}; Premier League en Bundesliga gaan mogelijk naar Videoland.</p>`;
+    <p class="bron">Tijden in Nederlandse tijd. Schema van football-data.org (Europa League, Conference League, Nations League, EK en WK via TheSportsDB, zo nodig OpenLigaDB), bijgewerkt ${veilig(new Date(schema.op).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Amsterdam' }))}. Interlands via TheSportsDB. Zenders gecontroleerd in ${veilig(VOETBAL_GECONTROLEERD)}; Premier League en Bundesliga gaan mogelijk naar Videoland.</p>`;
   document.getElementById('voetbal-week').addEventListener('click', (e) => {
     const knop = e.target.closest('[data-week]');
     if (!knop || knop.dataset.week === voetbalWeek) return;
@@ -2115,8 +2277,10 @@ function nlDagVan(w) {
   return new Date(w.start).toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
 }
 
-const SPORT_TABS = { voetbal: 'Voetbal', f1: 'Formule 1', motor: 'Motorsport', wielrennen: 'Wielrennen' };
-let sportTab = onthoud('sportTab', 'voetbal', Object.keys(SPORT_TABS));
+// Formule 1 en de andere raceklassen staan samen onder Motorsport (vroeger een eigen tabblad 'f1').
+const SPORT_TABS = { voetbal: 'Voetbal', motor: 'Motorsport', wielrennen: 'Wielrennen' };
+const leesSportTab = () => (onthoud('sportTab', 'voetbal', [...Object.keys(SPORT_TABS), 'f1']) === 'f1' ? 'motor' : onthoud('sportTab', 'voetbal', Object.keys(SPORT_TABS)));
+let sportTab = leesSportTab();
 
 async function toonSport() {
   const nr = schermNr;
@@ -2131,13 +2295,20 @@ async function toonSport() {
     ${mijn.length ? '' : '<p class="zacht sport-tip">Tip: kies in <a href="#/instellingen">Instellingen</a> je sportzenders, dan zie je wat jij live kunt volgen.</p>'}
     ${blok('voetbal', '<div id="voetbal"><p class="bezig">Schema ophalen…</p></div>')}
     ${blok(
-      'f1',
-      `<p class="zender${mijn.includes(F1_ZENDERS.live) ? ' bij-jou-zender' : ''}"><strong>${
-        mijn.includes(F1_ZENDERS.live) ? `Jij kijkt live via ${veilig(F1_ZENDERS.live)}` : `Live bij ${veilig(F1_ZENDERS.live)}`
-      }</strong><br />${veilig(F1_ZENDERS.extra)}</p>
-      <div id="f1"><p class="bezig">Schema ophalen…</p></div>`
+      'motor',
+      `${
+        f1Volgen()
+          ? `<section class="motor-serie">
+               <h3 class="label sport-label">Formule 1</h3>
+               <p class="zender${mijn.includes(F1_ZENDERS.live) ? ' bij-jou-zender' : ''}"><strong>${
+                 mijn.includes(F1_ZENDERS.live) ? `Jij kijkt live via ${veilig(F1_ZENDERS.live)}` : `Live bij ${veilig(F1_ZENDERS.live)}`
+               }</strong><br />${veilig(F1_ZENDERS.extra)}</p>
+               <div id="f1"><p class="bezig">Schema ophalen…</p></div>
+             </section>`
+          : ''
+      }
+      <div id="motor"></div>`
     )}
-    ${blok('motor', '<div id="motor"><p class="bezig">Schema ophalen…</p></div>')}
     ${blok('wielrennen', wielrennenHtml(mijn))}
   `;
   document.getElementById('sport-tabs').addEventListener('click', (e) => {
@@ -2151,6 +2322,7 @@ async function toonSport() {
   });
   toonVoetbal(nr, mijn);
   toonMotorsport(nr);
+  if (!f1Volgen()) return;
   let schema;
   try {
     schema = await haalF1();
@@ -2163,7 +2335,8 @@ async function toonSport() {
   const [volgende, ...rest] = komend;
   document.getElementById('f1').innerHTML = volgende
     ? `
-      <div class="race-volgend">
+      <div class="race-volgend livery livery-f1">
+        ${RACE_TEKENING}<span class="livery-merk" aria-hidden="true">F1</span>
         <p class="race-ronde">Ronde ${volgende.ronde} · eerstvolgende</p>
         <h3>${veilig(volgende.naam)}</h3>
         <p class="zacht">${veilig([volgende.plaats, volgende.land].filter(Boolean).join(', '))}</p>
@@ -2188,8 +2361,8 @@ async function toonMotorsport(nr) {
   const vak = () => (nr === schermNr ? document.getElementById('motor') : null);
   const keuzes = leesMotorKeuzes();
   if (!keuzes.length) {
-    vak().innerHTML = `<p class="leeg">Kies in <a href="#/instellingen">Instellingen</a> bij Sport → Motorsport welke raceklassen je volgt: ${Object.values(SERIES)
-      .map((x) => veilig(x.naam))
+    if (vak()) vak().innerHTML = `<p class="leeg${f1Volgen() ? ' motor-meer' : ''}">${f1Volgen() ? 'Meer racen volgen?' : 'Je volgt nog geen motorsport.'} Kies in <a href="#/instellingen">Instellingen</a> bij Sport → Motorsport wat je volgt: ${['Formule 1', ...Object.values(SERIES).map((x) => x.naam)]
+      .map((x) => veilig(x))
       .join(', ')}.</p>`;
     return;
   }
@@ -2208,7 +2381,8 @@ async function toonMotorsport(nr) {
       if (!volgende) return `<section class="motor-serie"><h3 class="label sport-label">${veilig(serie.naam)}</h3><p class="leeg-klein">Het seizoen zit erop. De nieuwe kalender verschijnt hier zodra die bekend is.</p></section>`;
       return `
         <section class="motor-serie">
-          <div class="race-volgend">
+          <div class="race-volgend livery livery-${k}">
+            ${RACE_TEKENING}<span class="livery-merk" aria-hidden="true">${veilig(RACE_MERK[k] ?? '')}</span>
             <p class="race-ronde">${veilig(serie.naam)}${volgende.ronde ? ` · ronde ${volgende.ronde}` : ''}${volgende.reeks ? ` · ${veilig(volgende.reeks)}` : ''} · eerstvolgende</p>
             <h3>${veilig(volgende.naam)}</h3>
             <p class="zacht">${veilig([volgende.plaats, volgende.land].filter(Boolean).join(', '))}</p>
@@ -2675,12 +2849,18 @@ function sportStand() {
 }
 
 function motorStand() {
-  const k = leesMotorKeuzes();
-  return k.length ? k.map((x) => SERIES[x].naam).join(', ') : 'Nog niets gekozen';
+  const k = [...(f1Volgen() ? ['Formule 1'] : []), ...leesMotorKeuzes().map((x) => SERIES[x].naam)];
+  return k.length ? k.join(', ') : 'Nog niets gekozen';
+}
+
+function landenStand() {
+  const k = leesVoetbalKeuzes();
+  const namen = [...k.landen.map((c) => VOLG_LANDEN[c].naam), ...k.alles.filter((c) => COMPETITIES[c]?.landen).map((c) => COMPETITIES[c].naam)];
+  return namen.length ? namen.join(', ') : 'Geen landen';
 }
 
 function competitiesStand() {
-  const alles = leesVoetbalKeuzes().alles.map((c) => COMPETITIES[c]?.kort).filter(Boolean);
+  const alles = leesVoetbalKeuzes().alles.filter((c) => !COMPETITIES[c]?.landen).map((c) => COMPETITIES[c]?.kort).filter(Boolean);
   return alles.length ? alles.join(', ') : 'Alleen je clubs';
 }
 
@@ -2788,9 +2968,13 @@ async function toonInstellingen({ welkom = null } = {}) {
       <details class="uitklap" id="motorsport-uitklap">
         <summary><span class="uitklap-kop">Motorsport</span><span class="zacht uitklap-stand" id="motorsport-stand">${veilig(motorStand())}</span></summary>
         <p class="zacht uitklap-uitleg">Welke raceklassen volg je? Die staan dan in Sport, op Vandaag en in Deze week.</p>
-        <div class="keuzes" id="motorsport-keuze">${Object.entries(SERIES)
-          .map(([k, x]) => `<button class="keuze${leesMotorKeuzes().includes(k) ? ' actief' : ''}" data-serie="${k}" aria-pressed="${leesMotorKeuzes().includes(k)}">${veilig(x.naam)}</button>`)
+        <div class="keuzes" id="motorsport-keuze">${[['f1', { naam: 'Formule 1' }], ...Object.entries(SERIES)]
+          .map(([k, x]) => {
+            const aan = k === 'f1' ? f1Volgen() : leesMotorKeuzes().includes(k);
+            return `<button class="keuze${aan ? ' actief' : ''}" data-serie="${k}" aria-pressed="${aan}">${veilig(x.naam)}</button>`;
+          })
           .join('')}</div>
+
         <p class="zacht klein">${Object.values(SERIES)
           .filter((x) => x.uitleg)
           .map((x) => `${veilig(x.naam)}: ${veilig(x.uitleg)}`)
@@ -2807,9 +2991,23 @@ async function toonInstellingen({ welkom = null } = {}) {
         <summary><span class="uitklap-kop">Hele competities</span><span class="zacht uitklap-stand" id="competities-stand">${veilig(competitiesStand())}</span></summary>
         <p class="zacht uitklap-uitleg">Zet een competitie aan om er álle wedstrijden van te zien.</p>
         <div class="keuzes" id="voetbal-alles">${Object.entries(COMPETITIES)
+          .filter(([, x]) => !x.landen)
           .map(([c, x]) => `<button class="keuze${leesVoetbalKeuzes().alles.includes(c) ? ' actief' : ''}" data-competitie="${c}">Alles ${veilig(x.naam)}</button>`)
           .join('')}</div>
       </details>
+      <details class="uitklap" id="landen-uitklap">
+        <summary><span class="uitklap-kop">Landen en toernooien</span><span class="zacht uitklap-stand" id="landen-stand">${veilig(landenStand())}</span></summary>
+        <p class="zacht uitklap-uitleg">Van je landen zie je de eerstvolgende interland, ook oefen- en kwalificatieduels.</p>
+        <div class="keuzes klein" id="voetbal-landen">${Object.entries(VOLG_LANDEN)
+          .map(([c, x]) => `<button class="keuze${leesVoetbalKeuzes().landen.includes(c) ? ' actief' : ''}" data-land="${c}">${veilig(x.naam)}</button>`)
+          .join('')}</div>
+        <p class="label clubs-kop">Alle wedstrijden van een toernooi</p>
+        <div class="keuzes" id="voetbal-toernooien">${Object.entries(COMPETITIES)
+          .filter(([, x]) => x.landen)
+          .map(([c, x]) => `<button class="keuze${leesVoetbalKeuzes().alles.includes(c) ? ' actief' : ''}" data-competitie="${c}">${veilig(x.naam)}</button>`)
+          .join('')}</div>
+      </details>
+
       </div>
       </div>
     </section>
@@ -2899,13 +3097,23 @@ async function toonInstellingen({ welkom = null } = {}) {
           : 'Niets nieuws: je titels op Wil ik zien staan nog bij dezelfde diensten.';
   });
 
-  document.getElementById('voetbal-alles').addEventListener('click', (e) => {
+  const competitieKlik = (e) => {
     const knop = e.target.closest('[data-competitie]');
     if (!knop) return;
     knop.classList.toggle('actief');
     const k = leesVoetbalKeuzes();
-    zetVoetbalKeuzes({ ...k, alles: [...document.querySelectorAll('#voetbal-alles .actief')].map((x) => x.dataset.competitie) });
+    zetVoetbalKeuzes({ ...k, alles: [...document.querySelectorAll('[data-competitie].actief')].map((x) => x.dataset.competitie) });
     document.getElementById('competities-stand').textContent = competitiesStand();
+    document.getElementById('landen-stand').textContent = landenStand();
+  };
+  document.getElementById('voetbal-alles').addEventListener('click', competitieKlik);
+  document.getElementById('voetbal-toernooien').addEventListener('click', competitieKlik);
+  document.getElementById('voetbal-landen').addEventListener('click', (e) => {
+    const knop = e.target.closest('[data-land]');
+    if (!knop) return;
+    knop.classList.toggle('actief');
+    zetVoetbalKeuzes({ ...leesVoetbalKeuzes(), landen: [...document.querySelectorAll('#voetbal-landen .actief')].map((x) => x.dataset.land) });
+    document.getElementById('landen-stand').textContent = landenStand();
   });
   document.getElementById('clubs-uitklap').addEventListener('toggle', (e) => e.target.open && toonClubsKeuze(nr), { once: true });
 
@@ -2947,7 +3155,8 @@ async function toonInstellingen({ welkom = null } = {}) {
     const aan = !knop.classList.contains('actief');
     knop.classList.toggle('actief', aan);
     knop.setAttribute('aria-pressed', String(aan));
-    zetMotorKeuzes([...document.querySelectorAll('#motorsport-keuze .actief')].map((k) => k.dataset.serie));
+    if (knop.dataset.serie === 'f1') zetF1Volgen(aan);
+    else zetMotorKeuzes([...document.querySelectorAll('#motorsport-keuze .actief')].map((k) => k.dataset.serie).filter((k) => k !== 'f1'));
     document.getElementById('motorsport-stand').textContent = motorStand();
   });
 
@@ -3088,7 +3297,7 @@ async function toonInstellingen({ welkom = null } = {}) {
         const n = await zetBackupTerug(inhoud);
         // Keuzes uit de backup (tabblad, sortering) meteen gebruiken.
         filmsTab = onthoud('filmsTab', 'wil', Object.keys(FILMS_TABS));
-        sportTab = onthoud('sportTab', 'voetbal', Object.keys(SPORT_TABS));
+        sportTab = leesSportTab();
         soort = onthoud('soort', 'alle', Object.keys(SOORTEN));
         sortering = onthoud('sortering', 'toegevoegd', Object.keys(SORTERINGEN));
         window.kijkThema?.toepassen();
@@ -3177,7 +3386,7 @@ const WELKOM_STAPPEN = [
   {
     id: 'sportzenders',
     titel: 'Waar kijk je sport?',
-    uitleg: 'Kies wat je hebt. Dan zie je bij elke wedstrijd of je hem live kunt volgen. Volg je een voetbalclub of motorsport, kies die dan ook; dat mag ook later.',
+    uitleg: 'Kies wat je hebt. Dan zie je bij elke wedstrijd of je hem live kunt volgen. Volg je een voetbalclub, land of motorsport, kies die dan ook; dat mag ook later.',
     groepen: ['sportzenders', 'motorsport', 'voetbal'],
     open: ['sportzenders-uitklap'],
     nodig: () => sportOpVandaag(),
@@ -3366,16 +3575,13 @@ function welkomKader(stap) {
   return kader;
 }
 
-const NIET_IN_WELKOM = [11, 223, 639]; // MUBI, Hayu, CineMember
-
 // Streamingdiensten als eenvoudige knoppen: aantikken is Abonnement.
 async function welkomDiensten(kader, nr) {
   const vak = kader.querySelector('.welkom-groepen');
   vak.innerHTML = '<p class="zacht welkom-diensten">Diensten ophalen…</p>';
   let lijst;
   try {
-    // In de eerste vragen alleen de bekende diensten; MUBI, Hayu en CineMember staan wel in Instellingen.
-    lijst = beperkDiensten(await haalAlleDiensten(), leesKeuzes()).filter((d) => !NIET_IN_WELKOM.includes(d.id) || keuzeVan(leesKeuzes(), d.id) === 'abonnement');
+    lijst = beperkDiensten(await haalAlleDiensten(), leesKeuzes());
   } catch {
     if (nr === schermNr) vak.innerHTML = '<p class="zacht welkom-diensten">Ophalen lukt nu niet. Ga gerust verder; je kiest ze later in Instellingen.</p>';
     return;

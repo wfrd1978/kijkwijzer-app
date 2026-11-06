@@ -14,13 +14,44 @@ export const COMPETITIES = {
   // Deze twee komen van TheSportsDB (football-data heeft ze niet gratis).
   EL: { naam: 'Europa League', kort: 'EL', zenders: [{ naam: 'Ziggo Sport', zeker: false }] },
   ECL: { naam: 'Conference League', kort: 'Conference League', zenders: [{ naam: 'Ziggo Sport', zeker: false }] },
+  // Landenteams, ook van TheSportsDB.
+  UNL: { naam: 'Nations League', kort: 'Nations League', zenders: [{ naam: 'Ziggo Sport', zeker: false }], landen: true },
+  EC: { naam: 'EK', kort: 'EK', zenders: [{ naam: 'NOS', zeker: false }], landen: true },
+  WC: { naam: 'WK', kort: 'WK', zenders: [{ naam: 'NOS', zeker: false }], landen: true },
 };
 
 // Een losse clubwedstrijd van TheSportsDB in een competitie die we ook helemaal hebben.
-export const COMPETITIE_PER_NAAM = { 'Europa League': 'EL', 'Conference League': 'ECL' };
+export const COMPETITIE_PER_NAAM = { 'Europa League': 'EL', 'Conference League': 'ECL', 'UEFA Nations League': 'UNL', 'FIFA World Cup': 'WC', 'UEFA European Championships': 'EC' };
+
+// Landen die je kunt volgen: de eerstvolgende interland (ook oefen- en kwalificatieduels).
+// id: het nummer bij TheSportsDB.
+export const VOLG_LANDEN = {
+  NL: { naam: 'Nederland', id: 133905 },
+  BE: { naam: 'België', id: 134515 },
+  DE: { naam: 'Duitsland', id: 133907 },
+  FR: { naam: 'Frankrijk', id: 133913 },
+  EN: { naam: 'Engeland', id: 133914 },
+  ES: { naam: 'Spanje', id: 133909 },
+  IT: { naam: 'Italië', id: 133910 },
+  PT: { naam: 'Portugal', id: 133908 },
+  HR: { naam: 'Kroatië', id: 133912 },
+  DK: { naam: 'Denemarken', id: 133906 },
+  CH: { naam: 'Zwitserland', id: 134506 },
+  AT: { naam: 'Oostenrijk', id: 135986 },
+  TR: { naam: 'Turkije', id: 135985 },
+  PL: { naam: 'Polen', id: 133901 },
+  SC: { naam: 'Schotland', id: 136450 },
+  NO: { naam: 'Noorwegen', id: 136516 },
+  MA: { naam: 'Marokko', id: 136139 },
+  CW: { naam: 'Curaçao', id: 140271 },
+  SR: { naam: 'Suriname', id: 140285 },
+  BR: { naam: 'Brazilië', id: 134496 },
+  AR: { naam: 'Argentinië', id: 134509 },
+};
 
 // --- Je keuzes (op de telefoon, gaan mee in de backup) ---
-// clubs: ids van football-data; alles: competities waarvan je álle wedstrijden wilt zien.
+// clubs: ids van football-data; alles: competities waarvan je álle wedstrijden wilt zien;
+// landen: landenteams (VOLG_LANDEN). Wie nog nooit landen koos, volgt Oranje (zoals altijd al).
 
 const OPSLAG = 'voetbal';
 
@@ -30,14 +61,15 @@ export function leesVoetbalKeuzes() {
     return {
       clubs: Array.isArray(k.clubs) ? k.clubs.filter(Number.isInteger) : [],
       alles: Array.isArray(k.alles) ? k.alles.filter((c) => c in COMPETITIES) : [],
+      landen: Array.isArray(k.landen) ? k.landen.filter((c) => c in VOLG_LANDEN) : ['NL'],
     };
   } catch {
-    return { clubs: [], alles: [] };
+    return { clubs: [], alles: [], landen: ['NL'] };
   }
 }
 
 export function zetVoetbalKeuzes(k) {
-  localStorage.setItem(OPSLAG, JSON.stringify({ clubs: k.clubs, alles: k.alles }));
+  localStorage.setItem(OPSLAG, JSON.stringify({ clubs: k.clubs, alles: k.alles, landen: k.landen ?? ['NL'] }));
 }
 
 // Wedstrijden van je clubs (in elke competitie) en alle wedstrijden van de competities die je helemaal volgt.
@@ -102,16 +134,31 @@ export function dagNaam(dag, vandaag) {
   return new Date(`${dag}T12:00:00Z`).toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 }
 
-// --- Oranje: de eerstvolgende interland via TheSportsDB (gratis, zonder sleutel) ---
+// --- Landenteams: de eerstvolgende interland via TheSportsDB (gratis, zonder sleutel) ---
 
-export function oranjeZender(competitie) {
+// Oranje: Nations League en kwalificatie bij Ziggo Sport, de rest (EK, WK, oefenduels) bij de NOS.
+// Andere landen: alleen EK en WK zijn zeker op tv (NOS); de rest is onbekend.
+export function oranjeZender(competitie, land = 'NL') {
+  if (land !== 'NL') return /^(FIFA World Cup|UEFA European Championships?)$/i.test(competitie ?? '') ? [{ naam: 'NOS', zeker: false }] : [];
   return /nations league|qualif|kwalificatie/i.test(competitie ?? '')
     ? [{ naam: 'Ziggo Sport', zeker: true }]
     : [{ naam: 'NOS', zeker: true }];
 }
 
+// Korte Nederlandse naam van een competitie van TheSportsDB.
+export function competitieNl(naam) {
+  const n = naam ?? '';
+  if (/nations league/i.test(n)) return 'Nations League';
+  if (/world cup qualifying/i.test(n)) return 'WK-kwalificatie';
+  if (/euro.*qualif/i.test(n)) return 'EK-kwalificatie';
+  if (/^FIFA World Cup$/i.test(n)) return 'WK';
+  if (/^UEFA European Championships?$/i.test(n)) return 'EK';
+  if (/friendl/i.test(n)) return 'Oefeninterland';
+  return n;
+}
+
 // Landen in het Nederlands (TheSportsDB geeft Engelse namen).
-const LANDEN = {
+export const LANDEN = {
   Netherlands: 'Nederland', Germany: 'Duitsland', Belgium: 'België', France: 'Frankrijk', Spain: 'Spanje', Italy: 'Italië',
   England: 'Engeland', Scotland: 'Schotland', Wales: 'Wales', Ireland: 'Ierland', 'Northern Ireland': 'Noord-Ierland',
   Greece: 'Griekenland', Poland: 'Polen', Portugal: 'Portugal', Denmark: 'Denemarken', Norway: 'Noorwegen', Sweden: 'Zweden',
@@ -119,19 +166,26 @@ const LANDEN = {
   Hungary: 'Hongarije', 'Czech Republic': 'Tsjechië', Czechia: 'Tsjechië', Turkey: 'Turkije', Romania: 'Roemenië', Ukraine: 'Oekraïne',
   Bosnia: 'Bosnië', 'Bosnia and Herzegovina': 'Bosnië en Herzegovina', Malta: 'Malta', Lithuania: 'Litouwen', Gibraltar: 'Gibraltar',
   Brazil: 'Brazilië', Argentina: 'Argentinië', 'United States': 'Verenigde Staten', USA: 'Verenigde Staten', Mexico: 'Mexico', Japan: 'Japan',
+  Morocco: 'Marokko', 'Curacao': 'Curaçao', Slovakia: 'Slowakije', Slovenia: 'Slovenië', Albania: 'Albanië', Armenia: 'Armenië', Cyprus: 'Cyprus',
+  Georgia: 'Georgië', Bulgaria: 'Bulgarije', 'North Macedonia': 'Noord-Macedonië', Montenegro: 'Montenegro', Kosovo: 'Kosovo', Israel: 'Israël',
+  Estonia: 'Estland', Latvia: 'Letland', Belarus: 'Wit-Rusland', Moldova: 'Moldavië', Kazakhstan: 'Kazachstan', Azerbaijan: 'Azerbeidzjan',
+  Luxembourg: 'Luxemburg', Andorra: 'Andorra', 'San Marino': 'San Marino', Liechtenstein: 'Liechtenstein', 'Faroe Islands': 'Faeröer',
 };
 
-export async function haalOranje({ fetcher = fetch } = {}) {
-  const antwoord = await fetcher('https://www.thesportsdb.com/api/v1/json/123/eventsnext.php?id=133905');
+export async function haalInterland(land = 'NL', { fetcher = fetch } = {}) {
+  const antwoord = await fetcher(`https://www.thesportsdb.com/api/v1/json/123/eventsnext.php?id=${VOLG_LANDEN[land].id}`);
   if (!antwoord.ok) throw new Error(`TheSportsDB gaf ${antwoord.status}`);
   const e = (await antwoord.json()).events?.[0];
   if (!e?.strTimestamp) return null;
   const nl = (naam) => LANDEN[naam] ?? naam;
   return {
+    land,
+    id: `tsdb-${e.idEvent}`,
     start: `${e.strTimestamp.replace(/Z?$/, '')}Z`,
     thuis: nl(e.strHomeTeam),
     uit: nl(e.strAwayTeam),
-    competitie: e.strLeague ?? '',
-    zenders: oranjeZender(e.strLeague),
+    competitie: competitieNl(e.strLeague),
+    zenders: oranjeZender(e.strLeague, land),
   };
 }
+export const haalOranje = (opties) => haalInterland('NL', opties);

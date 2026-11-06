@@ -4,6 +4,7 @@
 // Zonder sleutel of bij een storing wordt er niets geschreven en gaat het online zetten gewoon door.
 import { writeFile } from 'node:fs/promises';
 import { houdVorige, leesVorige } from './vorige.mjs';
+import { LANDEN } from '../src/voetbal.js';
 
 const SLEUTEL = process.env.FOOTBALL_DATA_KEY;
 // Eredivisie, Champions League, Premier League, Bundesliga, LaLiga, Serie A (gratis bij football-data).
@@ -67,15 +68,23 @@ for (const [i, code] of COMPETITIES.entries()) {
   }
 }
 
-// Europa League en Conference League staan niet in de gratis versie van football-data.
+// Europa League, Conference League en de landentoernooien (Nations League, EK, WK) staan niet in de
+// gratis versie van football-data.
 // TheSportsDB (gratis, zonder eigen sleutel) geeft per speelronde het hele programma:
 // we halen de ronde van de eerstvolgende wedstrijd op, en de ronde daarna.
 const TSDB = 'https://www.thesportsdb.com/api/v1/json/123';
-const UEFA = { EL: 4481, ECL: 5071 };
-const tsdbPloeg = (id, naam, logo) => ({ id: id ? `tsdb-${id}` : null, naam: naam || 'Nog onbekend', vol: naam || '', logo: logo || '' });
-async function haalTsdb(pad) {
+const UEFA = { EL: 4481, ECL: 5071, UNL: 4490, EC: 4502, WC: 4429 };
+const LANDENTOERNOOI = new Set(['UNL', 'EC', 'WC']);
+const tsdbPloeg = (id, naam, logo, vol = naam) => ({ id: id ? `tsdb-${id}` : null, naam: naam || 'Nog onbekend', vol: vol || '', logo: logo || '' });
+async function haalTsdb(pad, poging = 1) {
   await wacht(2100); // rustig aan: de gratis versie staat niet veel vragen per minuut toe
   const antwoord = await fetch(`${TSDB}/${pad}`, { signal: AbortSignal.timeout(30000) });
+  // Te veel vragen: een minuut wachten en het opnieuw proberen (hooguit twee keer).
+  if (antwoord.status === 429 && poging <= 2) {
+    console.log('TheSportsDB: te veel vragen, over een minuut opnieuw.');
+    await wacht(65000);
+    return haalTsdb(pad, poging + 1);
+  }
   if (!antwoord.ok) throw new Error(`status ${antwoord.status}`);
   return antwoord.json();
 }
@@ -181,15 +190,17 @@ for (const [code, liga] of Object.entries(UEFA)) {
           status: /finished|FT|AET|PEN/i.test(e.strStatus ?? '') ? 'FINISHED' : 'TIMED',
           ronde: r,
           fase: '',
-          thuis: tsdbPloeg(e.idHomeTeam, e.strHomeTeam, e.strHomeTeamBadge),
-          uit: tsdbPloeg(e.idAwayTeam, e.strAwayTeam, e.strAwayTeamBadge),
+          // Landen met hun Nederlandse naam ('Turkey' → 'Turkije').
+          // (de Engelse naam blijft als volledige naam, voor de live standen).
+          thuis: tsdbPloeg(e.idHomeTeam, LANDENTOERNOOI.has(code) ? LANDEN[e.strHomeTeam] ?? e.strHomeTeam : e.strHomeTeam, e.strHomeTeamBadge, e.strHomeTeam),
+          uit: tsdbPloeg(e.idAwayTeam, LANDENTOERNOOI.has(code) ? LANDEN[e.strAwayTeam] ?? e.strAwayTeam : e.strAwayTeam, e.strAwayTeamBadge, e.strAwayTeam),
         });
       }
     }
     // Zit de eerstvolgende wedstrijd er niet bij terwijl hij binnen het venster valt, dan was de
     // ronde niet compleet: dan het programma van OpenLigaDB gebruiken.
     const eerstStart = new Date(`${eerst.strTimestamp?.replace(/Z?$/, '')}Z`);
-    if (eerstStart >= van && eerstStart <= tot && !gezien.has(eerst.idEvent)) {
+    if (OPENLIGA[code] && eerstStart >= van && eerstStart <= tot && !gezien.has(eerst.idEvent)) {
       const reserve = await haalOpenLiga(code, String(eerst.strSeason).slice(0, 4));
       await vulLogosAan(reserve);
       wedstrijden.push(...reserve);

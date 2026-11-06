@@ -18,8 +18,8 @@ Deze app is gestart als kopie van de eigen Kijkwijzer van de eigenaar (oktober 2
 
 ## Sport
 
-- **Voetbal**: schema van je clubs en competities (football-data.org), aangevuld met bekers en Europa League (TheSportsDB), met het precieze ESPN-kanaal bij de Eredivisie, en de volgende interland van Oranje.
-- **Formule 1** en **wielrennen**, met zenders.
+- **Voetbal**: schema van je clubs en competities (football-data.org), aangevuld met bekers en Europa League (TheSportsDB), met het precieze ESPN-kanaal bij de Eredivisie, Nations League, EK en WK, en de volgende interland van de landen die je volgt (standaard Oranje).
+- **Motorsport** (Formule 1, MotoGP, DTM, GT World Challenge, WEC; zelf te kiezen) en **wielrennen**, met zenders.
 
 ## Instellingen
 
@@ -60,6 +60,20 @@ Volgende week (31 oktober 2026): bovenaan Deze week twee knoppen, Deze week en V
 ## Europees voetbal
 
 Europa League en Conference League (31 oktober 2026): ook als hele competitie te kiezen (Instellingen → Sport → Hele competities). Football-data heeft ze niet gratis; GitHub haalt ze elke nacht bij TheSportsDB op (de ronde van de eerstvolgende wedstrijd en de ronde daarna) en zet ze in voetbal.json. Geeft TheSportsDB een ronde niet compleet (de gratis versie geeft hooguit 50 wedstrijden per ronde, en voorrondes tellen mee), dan het programma van OpenLigaDB (gratis en open), met Duitse clubnamen omgezet naar de gangbare namen en zonder logo's. Een wedstrijd van een van je clubs staat er één keer in. Zender: Ziggo Sport (onder voorbehoud).
+
+## Sportnieuws en Vandaag (november 2026, overgenomen uit de eigen app)
+
+Op Vandaag, onder Sport vandaag, twee koppen van NOS Sport, afgestemd op wat je volgt (clubs, landen, competities, Formule 1, wielrennen); anders het nieuwste algemene sportnieuws. Alleen de letterlijke kop, met 'NOS' en een link naar het hele bericht: dat staat de NOS toe (artikel 7 van de voorwaarden, niet-commercieel). Beeld: het logo van je club, een vrije foto van een bekende coureur of renner van Wikimedia Commons (met maker en licentie), of een tegel per sport. GitHub haalt de koppen elk uur op (scripts/nieuws.mjs → nieuws.json); de schema's alleen 's nachts. Alleen bij Sport volgen aan.
+
+Vandaag: koppen met rechts een korte link (Schema, Meer bij NOS, Mijn lijst, Afstemmen), geen grijze uitlegregels meer, en een serie bij Verder kijken met een nieuwe aflevering krijgt daar een rood label in plaats van een tweede regel. Sport vandaag is één grote kaart (je club, Oranje, een race, …) met daaronder hooguit drie regels, zoals Vanavond op de NPO. Racen heeft een eigen tekening (strepen in de kleur van de klasse, curbstone, grote afkorting) in plaats van de geblokte vlag.
+
+## Formule 1 te kiezen, landen en landentoernooien (november 2026)
+
+Sport heeft drie tabbladen: Voetbal · Motorsport · Wielrennen. Formule 1 staat nu bij Motorsport en is daar aan of uit te zetten (Instellingen → Sport → Motorsport; staat aan voor wie niets koos). In Instellingen → Sport → Landen en toernooien kies je landen (21) en of je alle wedstrijden van de Nations League, het EK of het WK wilt zien. Van elk land de eerstvolgende interland (TheSportsDB, één keer per dag per land); wie nooit landen koos, volgt Oranje. Nations League, EK en WK haalt GitHub 's nachts bij TheSportsDB op. Zenders bij andere landen alleen bij EK en WK (NOS, onder voorbehoud).
+
+## Streamingdiensten (november 2026)
+
+Achttien diensten: Netflix, Netflix Kids, Videoland, NPO Start, NPO Plus, Disney Plus, HBO Max, Prime Video, Apple TV, SkyShowtime, Viaplay, Canal+, NLZIET, KPN, Ziggo TV, Pathé Thuis, Film1 en Rakuten TV. Een dienst daarbuiten blijft alleen zichtbaar als je er Abonnement op had staan.
 
 ## Controles
 

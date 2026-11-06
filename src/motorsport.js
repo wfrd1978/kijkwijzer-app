@@ -38,5 +38,19 @@ export function komendeMotorraces(schema, keuzes, nu = new Date()) {
     .sort((a, b) => a.sessies[0].start.localeCompare(b.sessies[0].start));
 }
 
+// Formule 1 volgen: aan of uit (aan als je nooit iets koos; zo blijft het bij wie het al had).
+// Apart bewaard van de andere klassen, zodat oude keuzes en backups gewoon blijven werken.
+export function f1Volgen() {
+  try {
+    return localStorage.getItem('f1Volgen') !== 'uit';
+  } catch {
+    return true;
+  }
+}
+
+export function zetF1Volgen(aan) {
+  localStorage.setItem('f1Volgen', aan ? 'aan' : 'uit');
+}
+
 // Trainingen tellen niet mee in het weekoverzicht; kwalificatie en races wel.
 export const isTraining = (sessie) => /training/i.test(sessie);

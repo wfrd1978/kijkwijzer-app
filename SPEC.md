@@ -79,6 +79,13 @@ Achttien diensten: Netflix, Netflix Kids, Videoland, NPO Start, NPO Plus, Disney
 
 Controle 31 oktober 2026 (onafhankelijk, vier controleurs): geen hoge of middelgrote risico's in beveiliging en privacy; de gedeelde sleutel komt alleen nog uit een afgeschermd geheim. Gerepareerd: nieuwe afleveringen worden in één ronde tegelijk opgehaald en na elke serie bewaard; de controle op een nieuwe versie wacht op internet (ook op een trage verbinding); Ontdekken toont bij een storing meteen een melding; na vegen en Ongedaan maken kloppen de lijst en de tellers, ook na wisselen van tabblad; een net gewijzigde instelling (ook je naam) zit altijd in de backup (dan eventueel met één tik extra); de tekst bij Sport volgen verandert mee. Opgeruimd: oude CSS (oude weekopmaak, oude dienstenlijst, oude kopjes) en een ongebruikte functie.
 
+## Rust en categorieën (november 2026, overgenomen uit de eigen app)
+
+- **Mijn lijst:** een rij categorieën om opzij te vegen (Komedie, Thriller, Drama enz., met aantal), uit de genres van TMDB; die genres staan apart in de opslag van de browser, niet bij de titels en niet in de backup. Na toevoegen vanuit het zoeken is het zoekveld leeg; naar een ander tabblad onderin wist een openstaande zoekterm. 'Ontdek iets nieuws' is een compacte kaart met drie trending posters. Geen uitlegregel en geen dubbel aantal; Toon en Sorteer zonder label.
+- **Vandaag:** per blok één keuze. Sport vandaag toont één grote kaart met een stille link naar de rest; Vanavond op de NPO één tip, de andere ingeklapt onder 'Ook vanavond'. Sportnieuws zonder plaatjes: drie genummerde koppen in de koppenletter. In Instellingen → Sport zet je Sportnieuws aan of uit (gaat mee in de backup).
+- **Minder uitleg:** Deze week en Sport hebben alleen nog een korte bronregel. Toelichtingen in Instellingen zie je alleen tijdens de welkomststappen, zodat nieuwe gebruikers ze wel krijgen.
+- **Online zetten:** motorsport alleen 's nachts; een lopende run wordt niet meer afgebroken door de uurlijkse nieuwsrun.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

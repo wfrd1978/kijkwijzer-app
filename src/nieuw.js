@@ -61,11 +61,45 @@ async function smaakGenres(titels, haalGenres) {
       break;
     }
   }
-  // Alleen de genres van titels die nog op je lijst staan bewaren.
-  for (const k of Object.keys(bekend)) if (!opLijst.has(k)) delete bekend[k];
-  zet('genresPerTitel', bekend);
+  bewaarGenres(bekend, opLijst);
   const genresVan = (t) => bekend[titelSleutel(t)];
   return { film: topGenres(smaak, genresVan, 'film'), serie: topGenres(smaak, genresVan, 'serie') };
+}
+
+// Bewaren, samen met wat intussen op een andere plek is opgehaald. Alleen de genres van titels
+// die nog op je lijst staan blijven bewaard.
+function bewaarGenres(nieuw, opLijst) {
+  const alles = { ...lees('genresPerTitel', {}), ...nieuw };
+  for (const k of Object.keys(alles)) if (!opLijst.has(k)) delete alles[k];
+  zet('genresPerTitel', alles);
+}
+
+// De bekende genres per titel (voor de categorieën in Mijn lijst).
+export function bekendeGenres() {
+  return lees('genresPerTitel', {});
+}
+
+// Genres ophalen voor titels op je lijst die nog geen genres hebben, rustig één voor één.
+// Staat apart in de opslag van de browser, niet bij je titels en niet in de backup.
+// Geeft true als er iets nieuws bij kwam.
+export async function vulGenresAan(titels, haalGenres, { wacht = 250 } = {}) {
+  const opLijst = new Set(titels.map(titelSleutel));
+  const bekend = bekendeGenres();
+  const zonder = titels.filter((t) => !bekend[titelSleutel(t)]);
+  const nieuw = {};
+  for (const t of zonder) {
+    try {
+      nieuw[titelSleutel(t)] = await haalGenres(t.soort, t.tmdbId);
+    } catch (fout) {
+      // Kent TMDB de titel niet meer: leeg bewaren, zodat hij niet steeds opnieuw gevraagd wordt.
+      if (fout?.name === 'NietGevonden') nieuw[titelSleutel(t)] = [];
+      else break; // geen internet of sleutel: de volgende keer verder
+    }
+    if (Object.keys(nieuw).length % 20 === 0) bewaarGenres(nieuw, opLijst);
+    if (wacht) await new Promise((klaar) => setTimeout(klaar, wacht));
+  }
+  if (Object.keys(nieuw).length) bewaarGenres(nieuw, opLijst);
+  return Object.keys(nieuw).length > 0;
 }
 
 // Om en om een film en een serie.

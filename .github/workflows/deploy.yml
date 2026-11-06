@@ -16,9 +16,11 @@ on:
 permissions:
   contents: read
 
+# Eén run tegelijk. Een nieuwe run wacht tot de lopende klaar is, in plaats van hem af te breken:
+# anders kon de uurlijkse nieuwsrun een nieuwe versie halverwege stoppen.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -59,8 +61,10 @@ jobs:
         run: node scripts/npo.mjs
         continue-on-error: true
       # Kalenders van MotoGP, DTM, GT World Challenge en WEC (TheSportsDB, zonder eigen sleutel).
+      # Bij een nieuwe versie niet: dat duurt minuten, en de kalender van vannacht is dan nog goed
+      # (het vangnet neemt de versie die online staat mee).
       - name: Motorsport ophalen
-        if: github.event_name != 'schedule' || github.event.schedule == '37 1 * * *'
+        if: github.event_name != 'push' && (github.event_name != 'schedule' || github.event.schedule == '37 1 * * *')
         timeout-minutes: 12
         run: node scripts/motorsport.mjs
         continue-on-error: true

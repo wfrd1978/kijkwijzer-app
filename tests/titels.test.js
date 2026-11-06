@@ -154,3 +154,19 @@ describe('status Bezig bestaat niet meer', () => {
     expect(normaliseerTitel({ ...basis, soort: 'film' }).voortgang).toBeUndefined();
   });
 });
+
+import { categorieenVan, categorieTelling } from '../src/titels.js';
+
+describe('categorieën', () => {
+  it('zet TMDB-genres om naar categorieën, ook de gecombineerde van series', () => {
+    expect(categorieenVan([35, 53])).toEqual(['Komedie', 'Thriller']);
+    expect(categorieenVan([10759])).toEqual(['Actie', 'Avontuur']);
+    expect(categorieenVan([10767])).toEqual([]);
+    expect(categorieenVan()).toEqual([]);
+  });
+  it('telt per categorie, grootste eerst, en slaat onbekende titels over', () => {
+    const genres = { 1: [35], 2: [35, 18], 3: undefined };
+    const titels = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    expect(categorieTelling(titels, (t) => genres[t.id])).toEqual([['Komedie', 2], ['Drama', 1]]);
+  });
+});

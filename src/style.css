@@ -152,7 +152,7 @@ a { color: var(--accent); }
 .persoon-foto.acteur-leeg { display: flex; align-items: center; justify-content: center; color: var(--zacht); font-family: var(--schreef); font-weight: 700; font-size: 1.3rem; }
 .aantal { color: var(--zacht); font-size: 0.9rem; }
 
-.lijst-regel { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 18px; }
+.lijst-regel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .lijst-regel .aantal { margin-left: auto; }
 .sorteer { display: flex; align-items: center; gap: 8px; color: var(--zacht); font-size: 0.9rem; }
 .sorteer select {
@@ -497,7 +497,7 @@ a.titel { text-decoration: none; }
 #films-vak .ontdek-keuzes { margin-top: 4px; }
 #eigen-vondsten .zoek-kop:first-child { margin-top: 16px; }
 
-.vandaag-blok { margin: 24px 0 0; }
+.vandaag-blok { margin: 34px 0 0; }
 .vak-kop { margin: 0 0 10px; font-family: var(--kop); font-weight: 700; font-size: 1.1rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
 .verder-kaart { display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 14px; background: var(--vlak); margin-bottom: 10px; }
 .verder-kaart > a { flex: none; line-height: 0; }
@@ -632,9 +632,7 @@ span.embleem { display: inline-flex; align-items: center; justify-content: cente
 span.livery { display: grid; place-items: center;
   background: linear-gradient(115deg, transparent 0 52%, var(--streep) 52% 66%, #f3f1ec 66% 70%, transparent 70%), linear-gradient(160deg, #2a2d34, #08090b); }
 span.livery b { font-family: var(--kop); font-weight: 800; font-style: italic; font-size: 1.05rem; letter-spacing: 0.01em; color: #fff; text-shadow: 0 1px 3px rgb(0 0 0 / 0.7); }
-.nieuws-beeld.livery b { font-size: 1.7rem; }
 .agenda-beeld.livery-motogp b { font-size: 0.7rem; }
-.nieuws-beeld.livery-motogp b { font-size: 1.05rem; }
 /* Landen: grote kaart voor een interland */
 .landkaart-groot { background: linear-gradient(130deg, #2b3a67, #10152a); }
 .landkaart-groot.is-oranje { background: linear-gradient(130deg, #ff8a1f, #b84800); }
@@ -657,8 +655,6 @@ span.livery b { font-family: var(--kop); font-weight: 800; font-style: italic; f
 }
 
 /* --- Mijn lijst: uitleg, knoppen in de regel, link naar Ontdekken --- */
-.lijst-uitleg { margin: 2px 0 8px; font-size: 0.88rem; color: var(--zacht); }
-.lijst-uitleg b { color: var(--tekst); }
 .regel-knop {
   align-self: flex-start; margin-top: 6px; padding: 5px 12px; border-radius: 999px;
   background: var(--accent); color: var(--accent-tekst); font-size: 0.85rem; font-weight: 700; cursor: pointer;
@@ -666,11 +662,47 @@ span.livery b { font-family: var(--kop); font-weight: 800; font-style: italic; f
 .lijst-sterren { display: inline-flex; gap: 2px; margin-top: 4px; }
 .lijst-ster { font-size: 1.45rem; line-height: 1; padding: 2px 3px; color: var(--zacht); opacity: 0.45; cursor: pointer; }
 .lijst-ster.aan { color: var(--ster); opacity: 1; }
+/* Ontdek-kaart: compact, met een kleur van de app en drie posters van wat trending is */
 .ontdek-link {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 10px; padding: 12px 14px;
-  border-radius: 12px; border: 1px solid var(--lijn); color: var(--tekst); text-decoration: none; font-weight: 700;
+  display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; min-height: 64px;
+  border-radius: 14px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--lijn));
+  background: linear-gradient(110deg, var(--accent-zacht), var(--vlak) 70%);
+  color: var(--tekst); text-decoration: none; overflow: hidden;
 }
-.ontdek-link .zacht { font-weight: 400; font-size: 0.85rem; }
+.ontdek-link[hidden] { display: none; }
+.ontdek-icoon {
+  flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-tekst);
+}
+.ontdek-icoon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.ontdek-icoon path { fill: currentColor; }
+.ontdek-tekst { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ontdek-tekst strong { font-size: 1.02rem; }
+.ontdek-tekst span { font-size: 0.8rem; color: var(--zacht); line-height: 1.25; }
+.ontdek-posters { flex: none; display: flex; }
+.ontdek-posters img {
+  width: 30px; height: 45px; object-fit: cover; border-radius: 4px; box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+  border: 1px solid var(--vlak);
+}
+.ontdek-posters img + img { margin-left: -12px; }
+.ontdek-posters img:nth-child(1) { transform: rotate(-6deg); }
+.ontdek-posters img:nth-child(3) { transform: rotate(6deg); }
+.ontdek-pijl { flex: none; font-size: 1.4rem; color: var(--accent); font-weight: 700; }
+@media (max-width: 360px) { .ontdek-posters { display: none; } }
+/* Categorieën in Mijn lijst: een rij om opzij te vegen */
+.categorieen {
+  display: flex; gap: 6px; overflow-x: auto; margin: 0 -16px 6px; padding: 2px 16px 6px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.categorieen::-webkit-scrollbar { display: none; }
+.categorieen[hidden] { display: none; }
+.categorie {
+  flex: none; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--lijn); background: var(--vlak);
+  color: var(--tekst); font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.categorie span { color: var(--zacht); font-weight: 400; margin-left: 2px; }
+.categorie.actief { background: var(--accent); border-color: var(--accent); color: var(--accent-tekst); }
+.categorie.actief span { color: inherit; opacity: 0.8; }
 .segment { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
 .sorteer select { border: 1px solid var(--lijn); border-radius: 999px; padding: 4px 10px; background: var(--vlak); text-decoration: none; }
 /* Titelpagina: je eigen dingen in één blok bovenaan */
@@ -693,7 +725,6 @@ span.livery b { font-family: var(--kop); font-weight: 800; font-style: italic; f
 .week-telling { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
 .week-telling span { padding: 5px 10px; border-radius: 999px; background: var(--vlak); font-size: 0.82rem; color: var(--zacht); }
 .week-telling strong { color: var(--tekst); font-family: var(--kop); font-size: 1rem; }
-.week-voorbij { margin: 0 0 12px; font-size: 0.85rem; }
 .weekdag { margin-bottom: 12px; padding: 12px 14px 4px; border-radius: 14px; background: var(--vlak); }
 .weekdag.is-vandaag { box-shadow: inset 0 0 0 2px var(--accent); }
 .weekdag.rustig { padding-bottom: 12px; background: transparent; border: 1px dashed var(--lijn); }
@@ -826,23 +857,21 @@ p.rij { display: block; }
 .kijktip-tekst .live-stand { color: #fff; }
 
 /* Sportnieuws (koppen van NOS Sport) */
-.sportnieuws { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
-.sportnieuws li { background: var(--vlak); border-radius: 14px; overflow: hidden; }
-.nieuws-regel { display: flex; align-items: center; gap: 14px; padding: 10px 14px 10px 10px; color: var(--tekst); text-decoration: none; }
-.nieuws-beeld { flex: none; display: grid; place-items: center; width: 72px; height: 72px; border-radius: 10px; overflow: hidden; }
-.nieuws-beeld img { width: 100%; height: 100%; }
-.nieuws-beeld.foto img { object-fit: cover; object-position: 50% 20%; }
-.nieuws-beeld.logo { background: #fff; padding: 10px; }
-.nieuws-beeld.logo img { object-fit: contain; }
-.nieuws-beeld.tegel { font-size: 1.9rem; background: linear-gradient(135deg, var(--accent), #7a1a10); }
-.nieuws-beeld.tegel.wielrennen { background: linear-gradient(135deg, #f2c200, #c27a00); }
-.nieuws-beeld.tegel.voetbal { background: linear-gradient(135deg, #2f8f46, #14532d); }
-.nieuws-wat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.nieuws-wat strong { font-weight: 650; line-height: 1.3; font-size: 1rem; }
-.nieuws-meta { font-size: 0.75rem; color: var(--zacht); text-transform: uppercase; letter-spacing: 0.06em; }
-.nieuws-bron { color: var(--accent); font-weight: 800; }
-.nieuws-foto-bron { margin: -4px 14px 8px 96px; font-size: 0.68rem; color: var(--zacht); }
-.nieuws-foto-bron a { color: inherit; }
+/* Sportnieuws: alleen typografie. Grote nummers en koppen in de smalle koppenletter. */
+.sportnieuws { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--tekst); }
+.sportnieuws li { border-bottom: 1px solid var(--lijn); }
+.nieuws-regel { display: flex; align-items: baseline; gap: 14px; padding: 14px 2px; color: var(--tekst); text-decoration: none; }
+.nieuws-nr {
+  flex: none; width: 2.1ch; font-family: var(--kop); font-weight: 800; font-size: 2.1rem; line-height: 0.8;
+  color: var(--accent); font-variant-numeric: tabular-nums;
+}
+.nieuws-wat { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.nieuws-wat strong {
+  font-family: var(--kop); font-weight: 700; font-size: 1.32rem; line-height: 1.1; letter-spacing: 0.005em;
+}
+.nieuws-regel:active strong { color: var(--accent); }
+.nieuws-meta { font-size: 0.7rem; color: var(--zacht); text-transform: uppercase; letter-spacing: 0.1em; }
+.nieuws-bron { color: var(--tekst); font-weight: 800; }
 
 /* Kop van een blok op Vandaag met een link rechts */
 .blok-kop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
@@ -857,3 +886,18 @@ p.rij { display: block; }
 .race-volgend .race-tekening path[stroke] { display: none; }
 .race-volgend.livery-motogp .livery-merk { font-size: 2.2rem; }
 .race-volgend.livery-motogp .race-ronde, .race-volgend.livery-motogp h3 { padding-right: 130px; }
+
+/* Rust op Vandaag: één keuze groot, de rest achter een stille link */
+.stil-link {
+  display: inline-block; margin-top: 10px; padding: 2px 0; font-size: 0.85rem; font-weight: 600;
+  color: var(--zacht); text-decoration: none; letter-spacing: 0.02em; cursor: pointer;
+}
+.stil-meer > summary { list-style: none; }
+.stil-meer > summary::-webkit-details-marker { display: none; }
+.stil-meer[open] > summary { color: var(--tekst); }
+.stil-meer .npo-ook { margin-top: 8px; }
+
+/* Uitleg in Instellingen alleen tijdens de welkomststappen; daarna weet je het. */
+body:not(.welkom-modus) .uitleg { display: none; }
+.verborgen { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lijst-regel { margin-top: 10px; }

@@ -195,3 +195,43 @@ export function volgendeAflevering(v, seizoenen = []) {
 export function voortgangKort(v) {
   return v && v.aflevering > 0 ? `S${v.seizoen} · A${v.aflevering}` : '';
 }
+
+// --- Categorieën (uit de genres van TMDB) ---
+
+// Film- en seriegenres van TMDB samengevoegd tot één indeling in gewone woorden.
+// TMDB kent bij series gecombineerde genres (zoals 'Action & Adventure'); die tellen bij beide.
+export const CATEGORIEEN = {
+  Actie: [28, 10759],
+  Animatie: [16],
+  Avontuur: [12, 10759],
+  Documentaire: [99],
+  Drama: [18],
+  Familie: [10751, 10762],
+  Fantasy: [14, 10765],
+  Historisch: [36],
+  Horror: [27],
+  Komedie: [35],
+  Misdaad: [80],
+  Muziek: [10402],
+  Mysterie: [9648],
+  Oorlog: [10752, 10768],
+  Reality: [10764],
+  Romantiek: [10749],
+  Sciencefiction: [878, 10765],
+  Thriller: [53],
+  Western: [37],
+};
+
+// De categorieën van één titel, op basis van zijn genrenummers.
+export function categorieenVan(genreIds = []) {
+  const ids = new Set(genreIds);
+  return Object.keys(CATEGORIEEN).filter((naam) => CATEGORIEEN[naam].some((g) => ids.has(g)));
+}
+
+// Welke categorieën voorkomen in deze titels, met het aantal; de grootste eerst.
+// 'genresVan' geeft de genrenummers van een titel (of niets als die nog niet bekend zijn).
+export function categorieTelling(titels, genresVan) {
+  const telling = new Map();
+  for (const t of titels) for (const c of categorieenVan(genresVan(t) ?? [])) telling.set(c, (telling.get(c) ?? 0) + 1);
+  return [...telling].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'nl'));
+}

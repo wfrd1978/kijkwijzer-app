@@ -35,3 +35,24 @@ describe('kiesKijktips', () => {
     expect(kiesKijktips([], new Set(), '2026-10-30')).toEqual([]);
   });
 });
+
+import { vulGenresAan, bekendeGenres } from '../src/nieuw.js';
+describe('vulGenresAan', () => {
+  it('haalt alleen ontbrekende genres op en bewaart ze; geen internet stopt rustig', async () => {
+    const opslag = new Map();
+    globalThis.localStorage = { getItem: (k) => opslag.get(k) ?? null, setItem: (k, v) => opslag.set(k, String(v)), removeItem: (k) => opslag.delete(k) };
+    opslag.set('genresPerTitel', JSON.stringify({ 'film:1': [35], 'film:99': [18] }));
+    const gevraagd = [];
+    const haal = async (soort, id) => {
+      gevraagd.push(id);
+      if (id === 3) throw new Error('offline');
+      return [53];
+    };
+    const nieuw = await vulGenresAan([t(1, 'film'), t(2, 'serie'), t(3, 'film'), t(4, 'film')], haal, { wacht: 0 });
+    expect(nieuw).toBe(true);
+    expect(gevraagd).toEqual([2, 3]);
+    // film:99 staat niet meer op de lijst en valt weg
+    expect(bekendeGenres()).toEqual({ 'film:1': [35], 'serie:2': [53] });
+    delete globalThis.localStorage;
+  });
+});

@@ -542,6 +542,17 @@ async function toonResultaten() {
 // Eén zoekresultaat groot, met de knop om hem op je lijst te zetten.
 // Staat hij er al op, dan zie je dat (met wanneer je hem zag) en kun je hem openen.
 toonBevestigen.nr = 0;
+// Het informatiescherm van een zoekresultaat (of tip) krijgt een eigen plek in de geschiedenis van de
+// telefoon. Terugvegen (of de terugknop van de browser) sluit het dan, net als de knop bovenin, en je
+// komt terug waar je vandaan kwam, in plaats van een scherm eerder.
+let bevestigSluiten = null;
+window.addEventListener('popstate', () => {
+  if (!bevestigSluiten) return;
+  const sluit = bevestigSluiten;
+  bevestigSluiten = null;
+  sluit();
+});
+
 function toonBevestigen(t, alOpLijst, terug = { naam: 'Mijn lijst', toon: () => toonFilms() }) {
   schermNr += 1; // wat het vorige scherm nog aan het ophalen was, mag hier niet meer tekenen
   window.scrollTo(0, 0);
@@ -563,9 +574,17 @@ function toonBevestigen(t, alOpLijst, terug = { naam: 'Mijn lijst', toon: () => 
       }
     </section>
   `;
-  const gaTerug = () => {
+  const sluit = () => {
     schermNr += 1;
     terug.toon();
+  };
+  // Al een informatiescherm open (een tip vanuit een tip)? Dan die plek hergebruiken.
+  if (!history.state?.bevestig) history.pushState({ bevestig: true }, '', location.href);
+  bevestigSluiten = sluit;
+  // Terug via de knop of na toevoegen: één stap terug in de geschiedenis; dat sluit het scherm.
+  const gaTerug = () => {
+    if (history.state?.bevestig) history.back();
+    else sluit();
   };
   document.getElementById('terug').addEventListener('click', gaTerug);
   // Waar kijken, trailer en acteurs, ook al voordat je hem op je lijst zet.
@@ -3399,6 +3418,7 @@ function welkomSportVraag(kader) {
 
 async function route() {
   schermNr += 1;
+  bevestigSluiten = null;
   // Een notitie die nog niet bewaard is, eerst opslaan.
   if (toonTitel.bewaarOpenstaand) {
     await toonTitel.bewaarOpenstaand();

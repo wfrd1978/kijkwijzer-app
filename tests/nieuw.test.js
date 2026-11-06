@@ -56,3 +56,23 @@ describe('vulGenresAan', () => {
     delete globalThis.localStorage;
   });
 });
+
+import { kiesMeerVanDag } from '../src/nieuw.js';
+describe('kiesMeerVanDag', () => {
+  const k = [10, 11, 12, 13, 14, 15, 16].map((id) => t(id, 'film'));
+  it('drie per dag, de hele dag dezelfde, morgen andere, en wat je toevoegt valt weg', () => {
+    const a = kiesMeerVanDag(k, new Set(['film:10']), '2026-11-06');
+    expect(a.keuzes.map((x) => x.tmdbId)).toEqual([11, 12, 13]);
+    // Eén op je lijst gezet: de andere twee blijven, aangevuld met een nieuwe.
+    expect(kiesMeerVanDag(k, new Set(['film:12']), '2026-11-06', a).keuzes.map((x) => x.tmdbId)).toEqual([11, 13, 10]);
+    expect(kiesMeerVanDag(k, new Set(), '2026-11-07', a).keuzes.map((x) => x.tmdbId)).toEqual([10, 14, 15]);
+  });
+});
+
+describe('kiesMeerVanDag altijd drie', () => {
+  it('te weinig nieuwe kandidaten: een eerdere tip komt terug', () => {
+    const k = [20, 21, 22].map((id) => t(id, 'serie'));
+    const stand = { dag: '2026-11-05', keuzes: [], getoond: ['serie:20', 'serie:21'] };
+    expect(kiesMeerVanDag(k, new Set(), '2026-11-06', stand).keuzes.map((x) => x.tmdbId)).toEqual([22, 20, 21]);
+  });
+});

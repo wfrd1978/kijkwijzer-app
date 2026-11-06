@@ -86,6 +86,10 @@ Controle 31 oktober 2026 (onafhankelijk, vier controleurs): geen hoge of middelg
 - **Minder uitleg:** Deze week en Sport hebben alleen nog een korte bronregel. Toelichtingen in Instellingen zie je alleen tijdens de welkomststappen, zodat nieuwe gebruikers ze wel krijgen.
 - **Online zetten:** motorsport alleen 's nachts; een lopende run wordt niet meer afgebroken door de uurlijkse nieuwsrun.
 
+## Nieuw voor jou met posters (november 2026, overgenomen uit de eigen app)
+
+Op Vandaag drie tips per dag (om en om film en serie) als drie posters naast elkaar, met een label Film of Serie en titel, genre en jaar eronder. Altijd drie: zet je er een op je lijst, dan komt er een andere voor in de plaats; zijn er in je genres te weinig nieuwe titels, dan zoekt de app breder, en anders mag een eerdere tip terugkomen. De tips van de dag staan apart in de opslag van de browser, niet in de backup.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

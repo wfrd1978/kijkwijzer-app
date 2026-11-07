@@ -26,7 +26,9 @@ const zet = (k, v) => {
 export function smaakTitels(titels, max = 15) {
   const fijn = titels.filter((t) => t.sterren >= 4);
   const wil = titels.filter((t) => t.status === 'Wil ik zien' && !(t.sterren >= 4));
-  return [...fijn.map((t) => ({ t, gewicht: 2 })), ...wil.map((t) => ({ t, gewicht: 1 }))].slice(0, max);
+  // Waar je mee stopte, telt tegen (een paar, apart van het maximum).
+  const gestopt = titels.filter((t) => t.status === 'Gestopt' && !(t.sterren >= 4)).slice(0, 5);
+  return [...[...fijn.map((t) => ({ t, gewicht: 2 })), ...wil.map((t) => ({ t, gewicht: 1 }))].slice(0, max), ...gestopt.map((t) => ({ t, gewicht: -1 }))];
 }
 
 // De drie genres die het vaakst voorkomen, per soort. 'genresVan' geeft de genres van één titel.
@@ -35,7 +37,7 @@ export function topGenres(smaak, genresVan, soort, aantal = 3) {
   for (const { t, gewicht } of smaak.filter((x) => x.t.soort === soort)) {
     for (const g of genresVan(t) ?? []) telling.set(g, (telling.get(g) ?? 0) + gewicht);
   }
-  return [...telling.entries()].sort((a, b) => b[1] - a[1]).slice(0, aantal).map(([g]) => g);
+  return [...telling.entries()].filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, aantal).map(([g]) => g);
 }
 
 // Kiest de tip van vandaag: dezelfde de hele dag, en geen titel die de afgelopen tijd al tip was

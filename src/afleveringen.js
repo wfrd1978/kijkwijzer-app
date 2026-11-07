@@ -23,7 +23,7 @@ function bewaar(alles) {
 
 // Series die je volgt: op je lijst en nog niet helemaal gezien.
 export function gevolgdeSeries(titels) {
-  return titels.filter((t) => t.soort === 'serie' && t.status !== 'Gezien');
+  return titels.filter((t) => t.soort === 'serie' && t.status !== 'Gezien' && t.status !== 'Gestopt');
 }
 
 // Haalt bij wat vandaag nog niet is opgehaald; rustig, één voor één. Geeft de bijgewerkte stand.

@@ -917,3 +917,6 @@ body:not(.welkom-modus) .uitleg { display: none; }
 .tip-poster strong { font-family: var(--kop); font-weight: 700; font-size: 1.05rem; line-height: 1.1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .tip-meta { font-size: 0.75rem; color: var(--zacht); }
 .tip-poster:active .tip-beeld { transform: scale(0.97); }
+
+/* Gestopt: een klein label in Mijn lijst */
+.status-gestopt { color: var(--zacht) !important; margin-right: 6px; }

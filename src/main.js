@@ -26,7 +26,7 @@ import { KEUZES, leesKeuzes, zetKeuze, zetAlleKeuzes, keuzeVan, nieuwBijJou, ver
 import { alleTitels, titelToevoegen, vraagBlijvendeOpslag, haalTitel, titelBijwerken, titelVerwijderen, titelTerugzetten } from './db.js';
 import { maakBackupBestand, bewaarBackup, laatsteBackup, dagenSinds, moetHerinneren, herinnerLater, leesBackup, zetBackupTerug } from './backup.js';
 import {
-  titelSleutel, STATUSSEN, statusWijziging, vandaag, datumTekst,
+  titelSleutel, STATUSSEN, isAfgerond, statusWijziging, vandaag, datumTekst,
   SOORTEN, SORTERINGEN, filterTitels, sorteerTitels, dubbelTekst, gevondenActeur,
   beginVoortgang, volgendeAflevering, voortgangKort, categorieTelling, categorieenVan,
 } from './titels.js';
@@ -315,7 +315,7 @@ function titelRegel(t, zoek = '', { status = true, acties = false } = {}) {
   // In de eigen lijst: bij Wil ik zien een knop 'Gezien', bij Gezien de sterren om aan te tikken.
   const actie = !acties
     ? ''
-    : t.status === 'Gezien'
+    : isAfgerond(t)
       ? `<span class="lijst-sterren" role="group" aria-label="Sterren">${[1, 2, 3, 4, 5]
           .map((n) => `<span class="lijst-ster${t.sterren >= n ? ' aan' : ''}" data-actie="ster" data-n="${n}" role="button" aria-label="${n} ${n === 1 ? 'ster' : 'sterren'}">★</span>`)
           .join('')}</span>`
@@ -327,9 +327,9 @@ function titelRegel(t, zoek = '', { status = true, acties = false } = {}) {
         ${posterHtml(t)}
         <div class="titel-tekst">
           <span class="regel">
-            ${status ? `<span class="status${t.status === 'Wil ik zien' ? '' : ' status-actief'}">${veilig(t.status)}</span>` : ''}
+            ${status ? `<span class="status${t.status === 'Wil ik zien' ? '' : ' status-actief'}">${veilig(t.status)}</span>` : t.status === 'Gestopt' ? '<span class="status status-gestopt">× Gestopt</span>' : ''}
             ${t.sterren && !acties ? `<span class="sterren-klein" aria-label="${t.sterren} sterren">${sterrenTekst(t.sterren)}</span>` : ''}
-            ${t.soort === 'serie' && t.status !== 'Gezien' && voortgangKort(t.voortgang) ? `<span class="voortgang-kort">${voortgangKort(t.voortgang)}</span>` : ''}
+            ${t.soort === 'serie' && !isAfgerond(t) && voortgangKort(t.voortgang) ? `<span class="voortgang-kort">${voortgangKort(t.voortgang)}</span>` : ''}
             ${t.nieuwBij?.length ? `<span class="nieuw-label">Nieuw bij ${veilig(t.nieuwBij.map((d) => d.naam).join(' en '))}</span>` : ''}
           </span>
           <strong>${veilig(t.titel)}</strong>
@@ -1064,7 +1064,7 @@ async function toonVandaag({ plek = null } = {}) {
     return;
   }
 
-  const verder = titels.filter((t) => t.soort === 'serie' && t.status !== 'Gezien' && t.voortgang);
+  const verder = titels.filter((t) => t.soort === 'serie' && !isAfgerond(t) && t.voortgang);
   const eigen = eigenDiensten();
   const afleveringenNu = afleveringenHtml(titels, leesAfleveringen());
   app.innerHTML = `
@@ -1334,7 +1334,8 @@ const FILMS_TABS = { wil: 'Wil ik zien', gezien: 'Gezien' };
 let categorie = 'alle';
 // Om de lijst opnieuw te tekenen als er op de achtergrond genres bij zijn gekomen.
 let lijstOpnieuw = null;
-const LIJST_STATUSSEN = { wil: ['Wil ik zien'], gezien: ['Gezien'] };
+// Gestopt staat bij Gezien, met een label: zo blijft de lijst rustig.
+const LIJST_STATUSSEN = { wil: ['Wil ik zien'], gezien: ['Gezien', 'Gestopt'] };
 let filmsTab = onthoud('filmsTab', 'wil', Object.keys(FILMS_TABS));
 let filmsZoek = '';
 
@@ -2571,7 +2572,7 @@ async function toonTitel(id, { naarSterren = false } = {}) {
       <div class="mijn-blok">
         <p class="label">Op mijn lijst</p>
         <div class="keuzes" id="statussen">
-          ${STATUSSEN.map((s) => `<button class="keuze" data-s="${s}">${s === 'Gezien' ? '✓ Gezien' : s}</button>`).join('')}
+          ${STATUSSEN.map((s) => `<button class="keuze" data-s="${s}">${{ Gezien: '✓ Gezien', Gestopt: '× Gestopt' }[s] ?? s}</button>`).join('')}
         </div>
         <div id="voortgang"></div>
 
@@ -2579,7 +2580,7 @@ async function toonTitel(id, { naarSterren = false } = {}) {
           <p class="label">Mijn oordeel</p>
           <div class="sterren" id="sterren" role="radiogroup" aria-label="Sterren"></div>
 
-          <p class="label">Gezien op</p>
+          <p class="label" id="datum-label">${titel.status === 'Gestopt' ? 'Gestopt op' : 'Gezien op'}</p>
           <div class="datum-regel">
             <input type="date" id="kijkdatum" value="${veilig(titel.kijkdatum)}" max="${vandaag()}" aria-label="Kijkdatum" />
             <button class="link-knop" id="datum-weg"${titel.kijkdatum ? '' : ' hidden'}>Wissen</button>
@@ -2604,7 +2605,8 @@ async function toonTitel(id, { naarSterren = false } = {}) {
   // Sterren en kijkdatum horen bij Gezien; bij Wil ik zien blijven ze uit beeld.
   const tekenStatus = () => {
     document.querySelectorAll('#statussen .keuze').forEach((k) => k.classList.toggle('actief', k.dataset.s === titel.status));
-    document.getElementById('gezien-deel').hidden = titel.status !== 'Gezien';
+    document.getElementById('gezien-deel').hidden = !isAfgerond(titel);
+    document.getElementById('datum-label').textContent = titel.status === 'Gestopt' ? 'Gestopt op' : 'Gezien op';
   };
   const tekenSterren = () => {
     document.getElementById('sterren').innerHTML = [1, 2, 3, 4, 5]
@@ -2647,7 +2649,7 @@ async function toonTitel(id, { naarSterren = false } = {}) {
   // dan staat de serie op Vandaag bij Verder kijken.
   const tekenVoortgang = () => {
     const vak = document.getElementById('voortgang');
-    if (titel.soort !== 'serie' || titel.status === 'Gezien') {
+    if (titel.soort !== 'serie' || isAfgerond(titel)) {
       vak.innerHTML = '';
       return;
     }

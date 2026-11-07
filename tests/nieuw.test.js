@@ -76,3 +76,11 @@ describe('kiesMeerVanDag altijd drie', () => {
     expect(kiesMeerVanDag(k, new Set(), '2026-11-06', stand).keuzes.map((x) => x.tmdbId)).toEqual([22, 20, 21]);
   });
 });
+
+describe('Gestopt in je smaak (Nieuw voor jou)', () => {
+  it('genres van gestopte titels tellen tegen', () => {
+    const smaak = smaakTitels([t(1, 'film'), t(2, 'film', { status: 'Gestopt' }), t(3, 'film', { status: 'Gestopt' })]);
+    const genres = { 1: [35, 27], 2: [27], 3: [27] };
+    expect(topGenres(smaak, (x) => genres[x.tmdbId], 'film')).toEqual([35]);
+  });
+});

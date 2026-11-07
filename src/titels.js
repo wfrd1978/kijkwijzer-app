@@ -1,6 +1,12 @@
 // Regels voor titels op je lijst, los van de opslag (zodat ze makkelijk te testen zijn).
 
-export const STATUSSEN = ['Wil ik zien', 'Gezien'];
+export const STATUSSEN = ['Wil ik zien', 'Gezien', 'Gestopt'];
+
+// Gezien of Gestopt: je bent er klaar mee. Zo'n serie volg je niet meer (geen Verder kijken,
+// geen nieuwe afleveringen).
+export function isAfgerond(t) {
+  return t.status === 'Gezien' || t.status === 'Gestopt';
+}
 
 // Tot oktober 2026 bestond ook de status 'Bezig'. Zo'n titel wordt 'Wil ik zien';
 // een serie houdt (of krijgt) een voortgang, zodat hij bij Verder kijken staat.
@@ -42,7 +48,7 @@ export function vandaag(nu = new Date()) {
 // dan wordt dat vandaag (je kunt hem daarna gewoon aanpassen).
 export function statusWijziging(titel, status, nu = new Date()) {
   const wijziging = { status };
-  if (status === 'Gezien' && !titel.kijkdatum) wijziging.kijkdatum = vandaag(nu);
+  if ((status === 'Gezien' || status === 'Gestopt') && !titel.kijkdatum) wijziging.kijkdatum = vandaag(nu);
   return wijziging;
 }
 
@@ -105,7 +111,7 @@ export function sorteerTitels(titels, sortering = 'toegevoegd') {
 
 // De tekst van de dubbel-waarschuwing: 'Staat al op je lijst · Gezien op 26 oktober 2026'.
 export function dubbelTekst(t) {
-  if (t.status === 'Gezien' && t.kijkdatum) return `Staat al op je lijst · Gezien op ${datumTekst(t.kijkdatum)}`;
+  if (isAfgerond(t) && t.kijkdatum) return `Staat al op je lijst · ${t.status} op ${datumTekst(t.kijkdatum)}`;
   return `Staat al op je lijst · ${t.status}`;
 }
 

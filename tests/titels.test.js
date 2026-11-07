@@ -143,8 +143,8 @@ describe('voortgang bij series', () => {
 });
 
 describe('status Bezig bestaat niet meer', () => {
-  it('kent alleen Wil ik zien en Gezien', () => {
-    expect(STATUSSEN).toEqual(['Wil ik zien', 'Gezien']);
+  it('kent Wil ik zien, Gezien en Gestopt (geen Bezig)', () => {
+    expect(STATUSSEN).toEqual(['Wil ik zien', 'Gezien', 'Gestopt']);
   });
   it('een oude backup met Bezig wordt Wil ik zien, met behoud van de voortgang', () => {
     const basis = { tmdbId: 1, soort: 'serie', titel: 'Borgen', status: 'Bezig' };
@@ -168,5 +168,23 @@ describe('categorieën', () => {
     const genres = { 1: [35], 2: [35, 18], 3: undefined };
     const titels = [{ id: 1 }, { id: 2 }, { id: 3 }];
     expect(categorieTelling(titels, (t) => genres[t.id])).toEqual([['Komedie', 2], ['Drama', 1]]);
+  });
+});
+
+import { isAfgerond } from '../src/titels.js';
+describe('Gestopt', () => {
+  it('is een status, krijgt de datum van vandaag en telt als afgerond', () => {
+    expect(STATUSSEN).toContain('Gestopt');
+    expect(statusWijziging({ kijkdatum: '' }, 'Gestopt', new Date(2026, 10, 7))).toEqual({ status: 'Gestopt', kijkdatum: '2026-11-07' });
+    expect(isAfgerond({ status: 'Gestopt' })).toBe(true);
+    expect(isAfgerond({ status: 'Gezien' })).toBe(true);
+    expect(isAfgerond({ status: 'Wil ik zien' })).toBe(false);
+    expect(dubbelTekst({ status: 'Gestopt', kijkdatum: '2026-11-07' })).toBe('Staat al op je lijst · Gestopt op 7 november 2026');
+  });
+});
+import { normaliseerTitel as schoneTitel } from '../src/titels.js';
+describe('Gestopt in een backup', () => {
+  it('blijft Gestopt bij terugzetten', () => {
+    expect(schoneTitel({ tmdbId: 1, soort: 'film', titel: 'X', status: 'Gestopt' }).status).toBe('Gestopt');
   });
 });

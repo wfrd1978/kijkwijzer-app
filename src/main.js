@@ -1277,9 +1277,16 @@ function toonNpo(p) {
       <a class="hoofdknop" href="${veiligeUrl(bezig ? p.live : npoLink(p))}" target="_blank" rel="noopener noreferrer">${bezig ? `Kijk nu live op ${veilig(p.zender)}` : 'Bekijk op NPO Start'}</a>
       ${p.titelOpLijst ? `<a class="tweede-knop" href="#/titel/${p.titelOpLijst.id}">Open op mijn lijst</a>` : '<button class="tweede-knop" id="npo-zoek">Zoek en zet op mijn lijst</button>'}
     </section>`;
-  document.getElementById('terug').addEventListener('click', () => {
+  // Net als bij een film of serie: een eigen plek in de geschiedenis, zodat terugvegen ook werkt.
+  const sluit = () => {
     schermNr += 1;
     terugNaar();
+  };
+  if (!history.state?.bevestig) history.pushState({ bevestig: true }, '', location.href);
+  bevestigSluiten = sluit;
+  document.getElementById('terug').addEventListener('click', () => {
+    if (history.state?.bevestig) history.back();
+    else sluit();
   });
   document.getElementById('npo-zoek')?.addEventListener('click', () => {
     filmsZoek = p.titel;

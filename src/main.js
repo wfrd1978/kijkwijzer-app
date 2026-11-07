@@ -547,6 +547,8 @@ toonBevestigen.nr = 0;
 // telefoon. Terugvegen (of de terugknop van de browser) sluit het dan, net als de knop bovenin, en je
 // komt terug waar je vandaan kwam, in plaats van een scherm eerder.
 let bevestigSluiten = null;
+// De app bepaalt zelf waar je uitkomt na terug; anders zet Safari soms een oude positie terug.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 window.addEventListener('popstate', () => {
   if (!bevestigSluiten) return;
   const sluit = bevestigSluiten;
@@ -1024,9 +1026,22 @@ function kijktipsHtml(tips) {
 
 // Terug naar Vandaag vanuit een tip: weer uitkomen op de plek waar je was (bijvoorbeeld bij
 // Nieuw voor jou onderaan), ook al worden de blokken opnieuw geladen.
+// De pagina zelf wordt bewaard en teruggezet: dat gaat meteen, zonder alles opnieuw te laden.
+// Is je lijst intussen veranderd (je zette de tip erop), dan wordt Vandaag opnieuw opgebouwd.
 function terugNaarVandaag() {
   const plek = window.scrollY;
-  return () => toonVandaag({ plek });
+  const inhoud = [...app.childNodes];
+  const aantalVoor = alleTitels().then((t) => t.length);
+  return async () => {
+    const nr = schermNr;
+    const [voor, nu] = await Promise.all([aantalVoor, alleTitels().then((t) => t.length)]);
+    if (nr !== schermNr) return;
+    // Lijst veranderd, of was Vandaag nog niet klaar met laden: opnieuw opbouwen.
+    if (voor !== nu || inhoud.some((n) => n.querySelector?.('.bezig'))) return toonVandaag({ plek });
+    app.replaceChildren(...inhoud);
+    window.scrollTo(0, plek);
+    requestAnimationFrame(() => window.scrollTo(0, plek));
+  };
 }
 
 async function toonVandaag({ plek = null } = {}) {
@@ -2145,6 +2160,7 @@ async function extraOphalen(keuzes, sleutel) {
   const ploegen = new Map(schema.wedstrijden.flatMap((w) => [w.thuis, w.uit]).filter((p) => p.id).map((p) => [p.id, p]));
   const clubs = keuzes.clubs.map((id) => ploegen.get(id)).filter(Boolean);
   let koppelingen = {};
+  let veranderd = false;
   try {
     koppelingen = JSON.parse(localStorage.getItem('clubKoppelingen') || '{}');
   } catch {
@@ -2153,13 +2169,23 @@ async function extraOphalen(keuzes, sleutel) {
   const uit = await haalExtraWedstrijden(clubs, koppelingen);
   try {
     localStorage.setItem('clubKoppelingen', JSON.stringify(uit.koppelingen));
+    veranderd = JSON.stringify(leesExtra()?.wedstrijden ?? []) !== JSON.stringify(uit.wedstrijden);
     // Niet helemaal gelukt (bijvoorbeeld te veel vragen tegelijk): de volgende keer opnieuw proberen.
     localStorage.setItem(EXTRA, JSON.stringify({ sleutel: uit.compleet ? sleutel : '', wedstrijden: uit.wedstrijden, op: new Date().toISOString(), gelukt: uit.gelukt, clubs: clubs.length }));
   } catch {
     return;
   }
-  // Staat er net een sportscherm open, dan bijwerken.
-  if ((document.getElementById('sport-vandaag') || document.getElementById('voetbal') || document.getElementById('week'))) route();
+  // Alleen als er echt iets nieuws is, en zonder naar boven te springen: dit kan pas na een minuut
+  // klaar zijn, als je allang aan het scrollen bent.
+  if (!veranderd) return;
+  const plek = window.scrollY;
+  if (document.getElementById('sport-vandaag')) {
+    schermNr += 1;
+    toonVandaag({ plek });
+  } else if (document.getElementById('voetbal') || document.getElementById('week')) {
+    await route();
+    window.scrollTo(0, plek);
+  }
 }
 
 // Naam en zenders van de competitie van een wedstrijd (ook voor de aanvullende wedstrijden).

@@ -1022,7 +1022,14 @@ function kijktipsHtml(tips) {
     .join('')}</ul>`;
 }
 
-async function toonVandaag() {
+// Terug naar Vandaag vanuit een tip: weer uitkomen op de plek waar je was (bijvoorbeeld bij
+// Nieuw voor jou onderaan), ook al worden de blokken opnieuw geladen.
+function terugNaarVandaag() {
+  const plek = window.scrollY;
+  return () => toonVandaag({ plek });
+}
+
+async function toonVandaag({ plek = null } = {}) {
   const nr = schermNr;
   const titels = await alleTitels();
   if (nr !== schermNr) return;
@@ -1091,6 +1098,22 @@ async function toonVandaag() {
     ${nieuwHtml(titels)}
   `;
 
+  let herstel = plek;
+  if (herstel != null) {
+    // Ga je zelf al scrollen, dan niet meer verspringen.
+    const stop = () => (herstel = null);
+    window.addEventListener('touchstart', stop, { once: true, passive: true });
+    window.addEventListener('wheel', stop, { once: true, passive: true });
+  }
+  const zetPlek = (ookAlsTeKort = false) => {
+    if (herstel == null || nr !== schermNr) return;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    if (max < herstel && !ookAlsTeKort) return;
+    window.scrollTo(0, Math.min(herstel, max));
+    herstel = null;
+  };
+  zetPlek();
+
   document.getElementById('verder')?.addEventListener('click', async (e) => {
     const knop = e.target.closest('[data-volgende]');
     if (!knop) return;
@@ -1128,7 +1151,7 @@ async function toonVandaag() {
         document.getElementById('kijktips-blok').hidden = false;
         document.getElementById('kijktips').addEventListener('click', (e) => {
           const knop = e.target.closest('[data-tip]');
-          if (knop) toonBevestigen(tips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: () => toonVandaag() });
+          if (knop) toonBevestigen(tips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: terugNaarVandaag() });
         });
       }
     }
@@ -1139,7 +1162,7 @@ async function toonVandaag() {
       document.getElementById('nieuw-voor-jou-blok').hidden = false;
       vak.addEventListener('click', (e) => {
         const knop = e.target.closest('[data-tip]');
-        if (knop) toonBevestigen(nieuweTips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: () => toonVandaag() });
+        if (knop) toonBevestigen(nieuweTips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: terugNaarVandaag() });
       });
     }
   };
@@ -1171,7 +1194,8 @@ async function toonVandaag() {
     document.getElementById('sportnieuws').innerHTML = html;
     document.getElementById('sportnieuws-blok').hidden = false;
   };
-  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, sportOpVandaag() && sportnieuwsAan() ? nieuwsBlok() : null, tipsBlokken(), npoBlok(), afleveringenBlok()]);
+  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, sportOpVandaag() && sportnieuwsAan() ? nieuwsBlok() : null, tipsBlokken(), npoBlok(), afleveringenBlok()].map((b) => b?.finally(() => zetPlek())));
+  zetPlek(true);
 }
 
 // Vanavond op de NPO: één grote tip (iets van je lijst gaat voor), en nog twee kleinere.
@@ -1210,6 +1234,7 @@ function npoHtml(avond) {
 
 // Meer over een programma uit de NPO-gids, met knoppen om te kijken.
 function toonNpo(p) {
+  const terugNaar = terugNaarVandaag();
   schermNr += 1; // wat Vandaag nog aan het ophalen was, mag hier niet meer tekenen
   window.scrollTo(0, 0);
   const start = new Date(p.start);
@@ -1239,7 +1264,7 @@ function toonNpo(p) {
     </section>`;
   document.getElementById('terug').addEventListener('click', () => {
     schermNr += 1;
-    toonVandaag();
+    terugNaar();
   });
   document.getElementById('npo-zoek')?.addEventListener('click', () => {
     filmsZoek = p.titel;

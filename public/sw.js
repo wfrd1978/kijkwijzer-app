@@ -4,9 +4,12 @@
 const CACHE = 'kijkwijzer-app-v1';
 const EIGEN = /^kijkwijzer-app-v\d+$/;
 // Posters van TMDB apart bewaren, zodat je lijst ook zonder internet plaatjes heeft.
-const POSTERS = 'posters-app-v1';
+// v2 (november 2026): posters 'open' ophalen (TMDB staat dat toe). Een 'gesloten' plaatje telt in de
+// browser voor vele megabytes, waardoor de opslag na enkele tientallen posters vol leek en de app
+// ze steeds opnieuw ophaalde. De oude opslag (v1) wordt bij het bijwerken opgeruimd.
+const POSTERS = 'posters-app-v2';
 const POSTER_ADRES = 'image.tmdb.org';
-const MAX_POSTERS = 600;
+const MAX_POSTERS = 1500; // zo'n 15 kB per poster: samen hooguit een paar tientallen MB
 const WACHT_OP_NETWERK = 3000;
 // Bestanden in assets/ hebben een unieke naam per versie; de oudste ruimen we op.
 const MAX_BESTANDEN = 40;
@@ -59,24 +62,37 @@ async function netwerkEerst(request) {
 }
 
 // Is er genoeg ruimte? Je lijst zelf gaat altijd voor: bij twijfel geen poster bewaren.
-async function ruimteVoorPosters(cache) {
+async function ruimteVoorPosters() {
   try {
     const { usage, quota } = await navigator.storage.estimate();
-    if (usage > quota * 0.5) return false;
+    return usage < quota * 0.5;
   } catch {
-    // Geen schatting mogelijk: dan alleen de grens op het aantal posters.
+    return true; // geen schatting mogelijk: dan alleen de grens op het aantal posters
   }
-  return (await cache.keys()).length < MAX_POSTERS;
+}
+
+// Vol? Dan de oudste posters weg (de opslag onthoudt de volgorde van bewaren).
+async function maakPlek(cache) {
+  const alle = await cache.keys();
+  for (const oud of alle.slice(0, Math.max(0, alle.length - MAX_POSTERS + 50))) await cache.delete(oud);
 }
 
 async function posterEerst(request) {
   const cache = await caches.open(POSTERS);
-  const bewaard = await cache.match(request);
+  const bewaard = await cache.match(request.url);
   if (bewaard) return bewaard;
-  const antwoord = await fetch(request);
-  // Plaatjes van een andere site zijn 'gesloten' (type opaque): wel te bewaren en te tonen.
-  if ((antwoord.ok || antwoord.type === 'opaque') && (await ruimteVoorPosters(cache))) {
-    cache.put(request, antwoord.clone()).catch(() => {});
+  let antwoord;
+  try {
+    // Open ophalen, zodat de poster met zijn echte grootte bewaard kan worden.
+    antwoord = await fetch(request.url, { mode: 'cors', credentials: 'omit' });
+  } catch {
+    return fetch(request); // lukt open niet: gewoon tonen, niet bewaren
+  }
+  if (antwoord.ok && (await ruimteVoorPosters())) {
+    cache
+      .put(request.url, antwoord.clone())
+      .then(() => maakPlek(cache))
+      .catch(() => {});
   }
   return antwoord;
 }

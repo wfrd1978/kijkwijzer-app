@@ -109,6 +109,10 @@ Heeft TMDB geen Nederlandse titel, dan geeft hij de originele, bij Aziatische pr
 - Sport heeft nu tot zeven tabbladen in een rij om opzij te vegen; sporten die je niet volgt, verdwijnen.
 - Instellingen → Sport is ingedeeld met kopjes: algemeen, Voetbal (clubs, competities, landen en toernooien), Motorsport (raceklassen) en Andere sporten (standaard alles aan). De keuzes gaan mee in de backup.
 
+## Posters echt bewaard (november 2026, overgenomen uit de eigen app)
+
+Posters worden 'open' opgehaald (TMDB staat dat toe) en met hun echte grootte bewaard in `posters-app-v2` (tot 1500 stuks; bij vol gaan de oudste eruit). Eerder leek de opslag na enkele tientallen posters vol, omdat browsers een 'gesloten' plaatje voor vele megabytes rekenen, en laadden de posters steeds opnieuw. De oude opslag (`posters-app-v1`) wordt opgeruimd; de opslag van de andere app wordt niet aangeraakt.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

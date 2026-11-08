@@ -1,5 +1,6 @@
 // Nieuw voor jou: elke dag één recent verschenen film of serie bij jouw diensten, in jouw smaak.
 import { titelSleutel } from './titels.js';
+import { heeftAnderSchrift } from './tmdb.js';
 
 export const GENRE_NAMEN = {
   28: 'Actie', 12: 'Avontuur', 16: 'Animatie', 35: 'Komedie', 80: 'Misdaad', 99: 'Documentaire', 18: 'Drama', 10751: 'Familie',
@@ -148,7 +149,9 @@ export async function kijktipsVanDag({ titels, diensten, dag, haalGenres, haalTo
 
 // Drie tips per dag (om en om film en serie), de hele dag dezelfde.
 export async function nieuwVoorJou({ titels, diensten, dag, haalGenres, haalNieuw }) {
-  const stand = lees('nieuwVoorJou', { dag: '', keuzes: [], getoond: [] });
+  const opgeslagen = lees('nieuwVoorJou', { dag: '', keuzes: [], getoond: [] });
+  // Tips van vóór de Engelse titels (in Chinese of Koreaanse tekens): opnieuw kiezen.
+  const stand = { ...opgeslagen, keuzes: (opgeslagen.keuzes ?? []).filter((t) => !heeftAnderSchrift(t.titel)) };
   const opLijst = new Set(titels.map(titelSleutel));
   // Al drie tips voor vandaag die niet op je lijst staan: die, zonder opnieuw te vragen.
   const bewaard = kiesMeerVanDag([], opLijst, dag, stand);

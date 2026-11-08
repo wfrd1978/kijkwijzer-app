@@ -94,6 +94,10 @@ Op Vandaag drie tips per dag (om en om film en serie) als drie posters naast elk
 
 Op de titelpagina een derde status naast Wil ik zien en Gezien: × Gestopt, met de datum van vandaag ('Gestopt op'); sterren geven mag. In Mijn lijst staat een gestopte titel bij Gezien, met het label × Gestopt. Een gestopte serie staat niet meer bij Verder kijken, krijgt geen nieuwe afleveringen en staat niet in Deze week. Bij Nieuw voor jou wegen de genres van gestopte titels minder (tenzij je hem toch 4 of 5 sterren gaf). Aan bestaande lijsten verandert niets; er komt alleen een status bij. Oude backups blijven werken en Gestopt blijft bij terugzetten behouden.
 
+## Geen titels in Chinese of Koreaanse tekens (november 2026, overgenomen uit de eigen app)
+
+Heeft TMDB geen Nederlandse titel, dan geeft hij de originele, bij Aziatische producties dus in een ander schrift (vaak ook met zo'n poster). Bij Nieuw voor jou, de kijktips en Ontdekken haalt de app dan de Engelse titel en poster op; is er ook geen Engelse, dan valt de titel weg en komt er een andere voor in de plaats.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

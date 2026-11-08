@@ -139,3 +139,15 @@ describe('naarSeizoenen', () => {
       .toEqual([{ nr: 1, afleveringen: 10 }, { nr: 2, afleveringen: 8 }]);
   });
 });
+
+import { heeftAnderSchrift } from '../src/tmdb.js';
+describe('titels in een ander schrift', () => {
+  it('herkent Chinees, Koreaans, Japans; Latijnse titels met accenten en leestekens niet', () => {
+    expect(heeftAnderSchrift('我的人间烟火')).toBe(true);
+    expect(heeftAnderSchrift('오징어 게임')).toBe(true);
+    expect(heeftAnderSchrift('進撃の巨人')).toBe(true);
+    expect(heeftAnderSchrift('Amélie')).toBe(false);
+    expect(heeftAnderSchrift('Squid Game: seizoen 2 – 2024!')).toBe(false);
+    expect(heeftAnderSchrift('')).toBe(false);
+  });
+});

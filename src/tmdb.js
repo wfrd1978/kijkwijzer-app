@@ -123,11 +123,36 @@ export async function haalAlleDiensten() {
 
 const TMDB_SOORT = { film: 'movie', serie: 'tv' };
 
+// Titels in een ander schrift (Chinees, Koreaans, Japans, Arabisch enz.): TMDB heeft dan geen
+// Nederlandse titel en geeft de originele. Leestekens, cijfers en accenten tellen gewoon mee.
+const ANDER_SCHRIFT = /[^\p{Script=Latin}\p{Script=Common}\p{Script=Inherited}]/u;
+export function heeftAnderSchrift(tekst) {
+  return ANDER_SCHRIFT.test(tekst ?? '');
+}
+
+// Zo'n titel krijgt de Engelse titel en poster; is er ook geen Engelse, dan valt hij weg.
+async function leesbaar(lijst) {
+  const uit = await Promise.all(
+    lijst.map(async (t) => {
+      if (!heeftAnderSchrift(t.titel)) return t;
+      try {
+        const d = await vraag(`/${TMDB_SOORT[t.soort]}/${t.tmdbId}`, { language: 'en-US' });
+        const titel = d.title ?? d.name ?? '';
+        if (!titel || heeftAnderSchrift(titel)) return null;
+        return { ...t, titel, poster: d.poster_path ?? t.poster, beschrijving: t.beschrijving || d.overview || '' };
+      } catch {
+        return null;
+      }
+    })
+  );
+  return uit.filter(Boolean);
+}
+
 // Wat deze week veel bekeken wordt.
 export async function haalTrending(soort, pagina = 1) {
   const s = TMDB_SOORT[soort];
   const data = await vraag(`/trending/${s}/week`, { page: pagina });
-  return (data.results ?? []).map((r) => naarTitel(r, s)).filter(Boolean);
+  return leesbaar((data.results ?? []).map((r) => naarTitel(r, s)).filter(Boolean));
 }
 
 // Populair bij jouw diensten in Nederland: met abonnement of gratis, niet huren of kopen.
@@ -144,14 +169,14 @@ export function dienstenParams(ids, pagina = 1) {
 export async function haalOpDiensten(soort, ids, pagina = 1) {
   const s = TMDB_SOORT[soort];
   const data = await vraag(`/discover/${s}`, dienstenParams(ids, pagina));
-  return (data.results ?? []).map((r) => naarTitel(r, s)).filter(Boolean);
+  return leesbaar((data.results ?? []).map((r) => naarTitel(r, s)).filter(Boolean));
 }
 
 // Wat TMDB aanraadt bij één titel (zelfde soort: films bij een film, series bij een serie).
 export async function haalAanbevelingen(soort, tmdbId) {
   const s = TMDB_SOORT[soort];
   const data = await vraag(`/${s}/${tmdbId}/recommendations`);
-  return (data.results ?? []).map((r) => naarTitel(r, s)).filter(Boolean);
+  return leesbaar((data.results ?? []).map((r) => naarTitel(r, s)).filter(Boolean));
 }
 
 // --- Trailer en acteurs ---
@@ -279,12 +304,14 @@ export async function haalTopOpDiensten(soort, ids, genres) {
     ...(genres.length ? { with_genres: genres.join('|') } : {}),
     ...(s === 'tv' ? { without_genres: '10762,10763,10766,10767' } : {}),
   });
-  return (data.results ?? [])
+  return leesbaar(
+    (data.results ?? [])
     .map((r) => {
       const t = naarTitel(r, s);
       return t && { ...t, genreIds: (r.genre_ids ?? []).filter(Number.isInteger), achtergrond: r.backdrop_path ?? '', score: typeof r.vote_average === 'number' ? Math.round(r.vote_average * 10) / 10 : null };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+  );
 }
 
 // Recent verschenen films of series bij jouw diensten, eventueel alleen in de genres die je graag ziet.
@@ -296,10 +323,12 @@ export async function haalNieuwOpDiensten(soort, ids, genres, vanaf) {
     ...(genres.length ? { with_genres: genres.join('|') } : {}),
     ...(s === 'movie' ? { 'primary_release_date.gte': vanaf } : { 'first_air_date.gte': vanaf, without_genres: '10762,10763,10766,10767' }),
   });
-  return (data.results ?? [])
+  return leesbaar(
+    (data.results ?? [])
     .map((r) => {
       const t = naarTitel(r, s);
       return t && { ...t, genreIds: (r.genre_ids ?? []).filter(Number.isInteger), achtergrond: r.backdrop_path ?? '' };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+  );
 }

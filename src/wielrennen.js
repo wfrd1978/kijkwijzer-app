@@ -48,3 +48,53 @@ export function koersDatum(k) {
   const zelfdeMaand = k.van.slice(0, 7) === k.tot.slice(0, 7);
   return `${opmaak(k.van, !zelfdeMaand)} – ${opmaak(k.tot, true)}`;
 }
+
+// --- Veldrijden en mountainbiken (november 2026) ---
+// Ook met de hand bijgewerkt. Veldrijden: alleen de wereldbeker (keuze van de eigenaar).
+// Bronnen: UCI-kalender via Domestique en Cyclingnews (veldrijden), ucimtbworldseries.com (MTB).
+// Zenders: veldrijden vooral HBO Max (Eurosport), de NOS zendt een deel uit (onder voorbehoud);
+// MTB: HBO Max nog niet bevestigd. Gecontroleerd november 2026.
+const VELD_ZENDERS = [{ naam: 'HBO Max', zeker: true }, { naam: 'NOS', zeker: false }];
+export const VELDRIJDEN = {
+  seizoen: '2026-2027',
+  gecontroleerd: 'november 2026',
+  bron: 'UCI-kalender wereldbeker veldrijden 2026-2027',
+  koersen: [
+    ['Ostrava', '2026-11-27'], ['Tábor', '2026-11-29'], ['Glasgow', '2026-12-13'], ['Antwerpen', '2026-12-19'],
+    ['Koksijde', '2026-12-20'], ['Gavere', '2026-12-26'], ['Namen', '2026-12-27'], ['Besançon', '2026-12-29'],
+    ['Zonhoven', '2027-01-03'], ['Benidorm', '2027-01-17'], ['Hamme', '2027-01-23'], ['Hoogerheide', '2027-01-24'],
+  ].map(([plaats, van], i) => ({ naam: `Wereldbeker ${plaats}`, van, soort: `Wereldbeker veldrijden · ronde ${i + 1}`, zenders: VELD_ZENDERS })),
+};
+
+const MTB_ZENDERS = [{ naam: 'HBO Max', zeker: false }];
+export const MOUNTAINBIKE = {
+  seizoen: 2027,
+  gecontroleerd: 'november 2026',
+  bron: 'WHOOP UCI Mountain Bike World Series 2027',
+  koersen: [
+    ['Nové Město na Moravě', '2027-05-21', '2027-05-23', 'Cross-country'],
+    ['Loudenvielle', '2027-05-29', '2027-05-30', 'Downhill'],
+    ['Leogang', '2027-06-11', '2027-06-13', 'Cross-country en downhill'],
+    ['Les Gets', '2027-06-18', '2027-06-20', 'Cross-country en downhill'],
+    ['La Thuile', '2027-07-02', '2027-07-04', 'Cross-country en downhill'],
+    ['Pal Arinsal', '2027-07-09', '2027-07-11', 'Cross-country en downhill'],
+    ['Lenzerheide', '2027-08-20', '2027-08-22', 'Cross-country en downhill'],
+    ['Val di Sole', '2027-09-10', '2027-09-12', 'Cross-country en downhill'],
+    ['Soldier Hollow (VS)', '2027-09-25', '2027-09-26', 'Cross-country'],
+    ['Whistler (Canada)', '2027-10-02', '2027-10-03', 'Downhill'],
+  ].map(([plaats, van, tot, soort], i) => ({ naam: `Wereldbeker ${plaats}`, van, tot, soort: `MTB · ronde ${i + 1} · ${soort}`, zenders: MTB_ZENDERS })),
+};
+
+// Fietsen: welke onderdelen volg je? Standaard alle drie (de weg stond er altijd al).
+export const FIETS_DELEN = { weg: 'Weg', veld: 'Veld', mtb: 'MTB' };
+export function leesFietsKeuzes() {
+  try {
+    const k = JSON.parse(localStorage.getItem('fietsen') || 'null');
+    return Array.isArray(k) ? k.filter((x) => x in FIETS_DELEN) : Object.keys(FIETS_DELEN);
+  } catch {
+    return Object.keys(FIETS_DELEN);
+  }
+}
+export function zetFietsKeuzes(keuzes) {
+  localStorage.setItem('fietsen', JSON.stringify(keuzes.filter((x) => x in FIETS_DELEN)));
+}

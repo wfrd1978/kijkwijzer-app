@@ -98,6 +98,17 @@ Op de titelpagina een derde status naast Wil ik zien en Gezien: × Gestopt, met 
 
 Heeft TMDB geen Nederlandse titel, dan geeft hij de originele, bij Aziatische producties dus in een ander schrift (vaak ook met zo'n poster). Bij Nieuw voor jou, de kijktips en Ontdekken haalt de app dan de Engelse titel en poster op; is er ook geen Engelse, dan valt de titel weg en komt er een andere voor in de plaats.
 
+## Meer sporten en een geordend sportmenu (november 2026, overgenomen uit de eigen app)
+
+- **Fietsen** (was Wielrennen) met Weg · Veld · MTB: de wegkoersen, de twaalf wereldbekerrondes veldrijden 2026-2027 (HBO Max, NOS onder voorbehoud) en de UCI MTB World Series 2027 (HBO Max onder voorbehoud).
+- **Schaatsen**: zes wereldbekers langebaan, EK Heerenveen en WK Beijing (NOS).
+- **Tennis**: ATP Finals Turijn (Ziggo Sport) en de vier grandslams van 2027 (HBO Max).
+- **Darten**: Grand Slam of Darts, Players Championship Finals, WK en de belangrijkste avonden van de Premier League (Viaplay).
+- **Vechtsport**: de eerstvolgende UFC-avond (TheSportsDB, gratis sleutel, één keer per dag; HBO Max) en GLORY (KIJK).
+- Kalenders met de hand bijgewerkt per seizoen (`src/wielrennen.js`, `src/schaatsen.js`, `src/sporten.js`), zonder starttijden. Ze staan ook op Vandaag en in Deze week.
+- Sport heeft nu tot zeven tabbladen in een rij om opzij te vegen; sporten die je niet volgt, verdwijnen.
+- Instellingen → Sport is ingedeeld met kopjes: algemeen, Voetbal (clubs, competities, landen en toernooien), Motorsport (raceklassen) en Andere sporten (standaard alles aan). De keuzes gaan mee in de backup.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)

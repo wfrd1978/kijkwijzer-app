@@ -920,3 +920,22 @@ body:not(.welkom-modus) .uitleg { display: none; }
 
 /* Gestopt: een klein label in Mijn lijst */
 .status-gestopt { color: var(--zacht) !important; margin-right: 6px; }
+
+/* Schaatsen: kaart met getekende ijsbaan */
+.ijskaart { background: linear-gradient(180deg, #1d2a3a 0%, #14171c 80%); }
+/* Fietsen: Weg · Veld · MTB */
+.fiets-delen { margin: 4px 0 14px; }
+/* Sport met vier tabbladen: iets kleinere letters */
+.segment.sport-tabs-4 button { font-size: 0.9rem; letter-spacing: 0.02em; padding-left: 2px; padding-right: 2px; }
+
+/* Tennis, darten, vechtsport */
+.tenniskaart { background: linear-gradient(180deg, #17324a 0%, #14171c 80%); }
+.dartkaart { background: linear-gradient(180deg, #2a1d1d 0%, #14171c 80%); }
+.vechtkaart { background: linear-gradient(180deg, #3a1d1d 0%, #14171c 80%); }
+/* Sport met meer dan vier tabbladen: een rij om opzij te vegen */
+.segment.sport-tabs-veel { display: flex; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; }
+.segment.sport-tabs-veel::-webkit-scrollbar { display: none; }
+.segment.sport-tabs-veel button { flex: none; padding: 0 14px; font-size: 0.9rem; letter-spacing: 0.02em; scroll-snap-align: center; }
+/* Instellingen: kopjes binnen het blok Sport */
+.label.instel-sub { margin: 18px 0 4px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.kaart-noot { font-size: 0.8rem; opacity: 0.85; }

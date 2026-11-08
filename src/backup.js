@@ -10,7 +10,7 @@ const LATER = 'backupLater';
 export const HERINNER_NA_DAGEN = 14;
 
 // Keuzes in de lijst en de weergave: klein, maar fijn om mee te verhuizen.
-const VOORKEUREN = ['filmsTab', 'sportTab', 'soort', 'sortering', 'weergave', 'diensten', 'sportzenders', 'voetbal', 'tvVoorkeuren', 'vandaagSport', 'ontdekSoort', 'ontdekBron', 'naam', 'welkomKlaar', 'motorsport', 'liveStanden', 'f1Volgen', 'sportnieuws'];
+const VOORKEUREN = ['filmsTab', 'sportTab', 'soort', 'sortering', 'weergave', 'diensten', 'sportzenders', 'voetbal', 'tvVoorkeuren', 'vandaagSport', 'ontdekSoort', 'ontdekBron', 'naam', 'welkomKlaar', 'motorsport', 'liveStanden', 'f1Volgen', 'sportnieuws', 'fietsen', 'schaatsen', 'fietsDeel', 'tennis', 'darten', 'vechtsport'];
 
 function lees(sleutel) {
   try {

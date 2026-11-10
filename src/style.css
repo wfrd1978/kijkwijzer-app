@@ -939,3 +939,7 @@ body:not(.welkom-modus) .uitleg { display: none; }
 /* Instellingen: kopjes binnen het blok Sport */
 .label.instel-sub { margin: 18px 0 4px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
 .kaart-noot { font-size: 0.8rem; opacity: 0.85; }
+
+/* Nieuw op NPO Plus: drie posters onder Vanavond op de NPO */
+.npo-plus { margin-top: 18px; }
+.label.npo-plus-kop { margin: 0 0 10px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--zacht); }

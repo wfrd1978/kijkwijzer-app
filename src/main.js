@@ -3,7 +3,7 @@ import './opslag.js';
 import './style.css';
 import { veilig, veiligeUrl } from './veilig.js';
 import { soortSleutel, leesSleutel, eigenSleutel, heeftGedeeldeSleutel, bewaarSleutel, wisSleutel } from './sleutel.js';
-import { zoekTitels, testSleutel, posterUrl, SleutelFout, haalDiensten, haalAlleDiensten, haalTrending, haalOpDiensten, haalAanbevelingen, haalTrailerEnActeurs, haalActeur, haalAfleveringen, haalGenres, haalNieuwOpDiensten, haalTopOpDiensten } from './tmdb.js';
+import { zoekTitels, testSleutel, posterUrl, SleutelFout, haalDiensten, haalAlleDiensten, haalTrending, haalOpDiensten, haalAanbevelingen, haalTrailerEnActeurs, haalActeur, haalAfleveringen, haalGenres, haalNieuwOpDiensten, haalTopOpDiensten, haalNieuwOpNpo } from './tmdb.js';
 import { kiesFavorieten, combineerTips } from './tips.js';
 import { haalF1, komendeRaces, nlTijd, F1_ZENDERS, ZENDER_GIDS, SPORTZENDERS, leesSportzenders, zetSportzenders } from './sport.js';
 import { WIELRENNEN, VELDRIJDEN, MOUNTAINBIKE, FIETS_DELEN, leesFietsKeuzes, zetFietsKeuzes, komendeKoersen, kanIkKijken, koersDatum } from './wielrennen.js';
@@ -781,7 +781,8 @@ function eenZender(zenders, mijn) {
 async function sportVandaagHtml() {
   const mijn = leesSportzenders();
   const items = await sportItems([vandaag()]);
-  if (!items.length) return '<p class="leeg-klein">Geen sport vandaag bij jouw keuzes. <a href="#/sport">Bekijk het schema</a></p>';
+  // Geen sport bij jouw keuzes: dan geen melding, het blok verdwijnt (zie toonVandaag).
+  if (!items.length) return '';
   // Eén grote kaart, zoals bij Vanavond op de NPO: wat nog moet komen en het meest van jou is
   // (je club, Oranje, een race), daaronder kort de rest.
   const nu = Date.now();
@@ -1109,7 +1110,7 @@ async function toonVandaag({ plek = null } = {}) {
     }
     ${
       sportOpVandaag()
-        ? `<section class="vandaag-blok">
+        ? `<section class="vandaag-blok" id="sport-blok">
              ${blokKop('Sport vandaag', { href: '#/sport', tekst: 'Schema' })}
              <div id="sport-vandaag"><p class="bezig">Ophalen…</p></div>
            </section>
@@ -1140,6 +1141,7 @@ async function toonVandaag({ plek = null } = {}) {
     <section class="vandaag-blok" id="npo-blok" hidden>
       ${blokKop('Vanavond op de NPO', { href: '#/instellingen', tekst: 'Afstemmen' })}
       <div id="npo"></div>
+      <div id="npo-plus" class="npo-plus" hidden></div>
     </section>
     ${nieuwHtml(titels)}
   `;
@@ -1185,7 +1187,15 @@ async function toonVandaag({ plek = null } = {}) {
   // De blokken laden los van elkaar: een trage of haperende bron houdt de rest niet op.
   const sportBlok = async () => {
     const sport = await sportVandaagHtml();
-    if (nr === schermNr) document.getElementById('sport-vandaag').innerHTML = sport;
+    if (nr !== schermNr) return;
+    if (sport) {
+      document.getElementById('sport-vandaag').innerHTML = sport;
+      return;
+    }
+    // Vandaag geen sport bij jouw keuzes: blok weg, en Vanavond op de NPO schuift omhoog naar die plek.
+    const blok = document.getElementById('sport-blok');
+    blok.hidden = true;
+    blok.before(document.getElementById('npo-blok'));
   };
   // Kijktips en Nieuw voor jou na elkaar: ze delen de genres van je smaak.
   const tipsBlokken = async () => {
@@ -1224,6 +1234,28 @@ async function toonVandaag({ plek = null } = {}) {
       });
     }
   };
+  // Nieuw op NPO Plus: drie posters onder Vanavond op de NPO.
+  const npoPlusBlok = async () => {
+    if (!leesSleutel()) return;
+    const vanaf = new Date(Date.now() - 183 * 86400000).toISOString().slice(0, 10);
+    const lijst = await vanVandaag('npo-plus', async () => {
+      const [films, series] = await Promise.all(['film', 'serie'].map((soort) => haalNieuwOpNpo(soort, vanaf).catch(() => [])));
+      const om = [];
+      for (let i = 0; i < Math.max(films.length, series.length); i++) om.push(...[series[i], films[i]].filter(Boolean));
+      return om.length ? om : null;
+    });
+    const opLijst = new Set(titels.map(titelSleutel));
+    const tips = (lijst ?? []).filter((t) => !opLijst.has(titelSleutel(t))).slice(0, 3);
+    if (nr !== schermNr || !tips.length) return;
+    const vak = document.getElementById('npo-plus');
+    vak.innerHTML = `<p class="label npo-plus-kop">Nieuw op NPO Plus</p>${nieuwVoorJouHtml(tips)}`;
+    vak.hidden = false;
+    document.getElementById('npo-blok').hidden = false;
+    vak.addEventListener('click', (e) => {
+      const knop = e.target.closest('[data-tip]');
+      if (knop) toonBevestigen(tips[Number(knop.dataset.tip)], null, { naam: 'Vandaag', toon: terugNaarVandaag() });
+    });
+  };
   const afleveringenBlok = async () => {
     if (!leesSleutel()) return;
     const stand = await werkAfleveringenBij(titels, vandaag(), haalAfleveringen);
@@ -1240,7 +1272,7 @@ async function toonVandaag({ plek = null } = {}) {
     document.getElementById('sportnieuws').innerHTML = html;
     document.getElementById('sportnieuws-blok').hidden = false;
   };
-  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, sportOpVandaag() && sportnieuwsAan() ? nieuwsBlok() : null, tipsBlokken(), npoBlok(), afleveringenBlok()].map((b) => b?.finally(() => zetPlek())));
+  await Promise.allSettled([sportOpVandaag() ? sportBlok() : null, sportOpVandaag() && sportnieuwsAan() ? nieuwsBlok() : null, tipsBlokken(), npoBlok(), npoPlusBlok(), afleveringenBlok()].map((b) => b?.finally(() => zetPlek())));
   zetPlek(true);
 }
 

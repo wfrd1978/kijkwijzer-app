@@ -113,6 +113,11 @@ Heeft TMDB geen Nederlandse titel, dan geeft hij de originele, bij Aziatische pr
 
 Posters worden 'open' opgehaald (TMDB staat dat toe) en met hun echte grootte bewaard in `posters-app-v2` (tot 1500 stuks; bij vol gaan de oudste eruit). Eerder leek de opslag na enkele tientallen posters vol, omdat browsers een 'gesloten' plaatje voor vele megabytes rekenen, en laadden de posters steeds opnieuw. De oude opslag (`posters-app-v1`) wordt opgeruimd; de opslag van de andere app wordt niet aangeraakt.
 
+## Rustiger Vandaag zonder sport, en Nieuw op NPO Plus (november 2026, overgenomen uit de eigen app)
+
+- Is er vandaag niets bij jouw sportkeuzes, dan staat er geen melding meer: het blok Sport vandaag verdwijnt en Vanavond op de NPO schuift naar die plek.
+- Onder Vanavond op de NPO een rij van drie posters 'Nieuw op NPO Plus': films en series van het afgelopen halfjaar die bij NPO Plus of NPO Start te zien zijn (JustWatch via TMDB), één keer per dag opgehaald. Wat al op je lijst staat valt weg; nieuws, praatprogramma's, soaps en kinderseries tellen niet mee. TMDB kent vooral drama, films en documentaireseries; 'nieuw' is benaderd met de verschijningsdatum.
+
 ## Werklijst
 
 (Nog leeg. Wensen van de eigenaar of van gebruikers komen hier.)
